@@ -1,0 +1,57 @@
+<div class="game-container">
+  <header class="game-header">
+    <a routerLink="/" class="back-button">
+      <span class="arrow">←</span>
+      <span>Back to Games</span>
+    </a>
+    <h1>Tic Tac Toe</h1>
+  </header>
+
+  <div class="scoreboard">
+    <div class="score player-x" [class.active]="currentPlayer === 'X' && !winner && !isDraw">
+      <span class="player-symbol">X</span>
+      <span class="player-label">Player 1</span>
+      <span class="score-value">{{ scores.X }}</span>
+    </div>
+    <div class="score player-o" [class.active]="currentPlayer === 'O' && !winner && !isDraw">
+      <span class="player-symbol">O</span>
+      <span class="player-label">Player 2</span>
+      <span class="score-value">{{ scores.O }}</span>
+    </div>
+  </div>
+
+  <div class="game-status">
+    @if (winner) {
+      <span class="status winner">🎉 Player {{ winner }} wins!</span>
+    } @else if (isDraw) {
+      <span class="status draw">🤝 It's a draw!</span>
+    } @else {
+      <span class="status turn">Player {{ currentPlayer }}'s turn</span>
+    }
+  </div>
+
+  <div class="board">
+    @for (cell of board; track $index) {
+      <button 
+        class="cell"
+        [class.x]="cell === 'X'"
+        [class.o]="cell === 'O'"
+        [class.winning]="isWinningCell($index)"
+        [disabled]="!!cell || !!winner || isDraw"
+        (click)="makeMove($index)">
+        @if (cell) {
+          <span class="cell-content">{{ cell }}</span>
+        }
+      </button>
+    }
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" (click)="resetGame()">
+      New Game
+    </button>
+    <button class="btn btn-secondary" (click)="resetScores()">
+      Reset Scores
+    </button>
+  </div>
+</div>

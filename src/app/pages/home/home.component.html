@@ -1,0 +1,19 @@
+<div class="home-container">
+  <header class="hero">
+    <h1>2 Player Games</h1>
+    <p class="subtitle">Challenge your friends to classic multiplayer games</p>
+  </header>
+
+  <section class="games-grid">
+    @for (game of games; track game.id) {
+      <a [routerLink]="game.route" class="game-card">
+        <div class="game-icon">{{ game.icon }}</div>
+        <div class="game-info">
+          <h2>{{ game.name }}</h2>
+          <p class="description">{{ game.description }}</p>
+          <span class="players-badge">{{ game.players }}</span>
+        </div>
+      </a>
+    }
+  </section>
+</div>
