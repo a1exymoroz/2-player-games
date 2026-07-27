@@ -13,6 +13,12 @@
   </header>
 
   <div class="track-wrapper">
+    <div class="scoreboard">
+      <span class="score score--red">{{ player1Score }}</span>
+      <span class="score-dot">•</span>
+      <span class="score score--blue">{{ player2Score }}</span>
+    </div>
+
     <canvas #canvas class="track"></canvas>
 
     @if (gameOverMessage) {
@@ -25,6 +31,7 @@
   <div class="hint">
     <span class="player-hint player-hint--red">Player 1: <kbd>←</kbd> reverse · <kbd>→</kbd> accelerate</span>
     <span class="player-hint player-hint--blue">Player 2: <kbd>A</kbd> reverse · <kbd>D</kbd> accelerate</span>
+    <span class="player-hint">Reset: <kbd>Space</kbd></span>
   </div>
 
   <div class="actions">

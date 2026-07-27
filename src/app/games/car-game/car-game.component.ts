@@ -6,15 +6,18 @@ import {
   CHASSIS_HEIGHT,
   CHASSIS_WIDTH,
   DRIVE_FORCE,
+  FLIP_TORQUE,
   HEAD_OFFSET,
   HEAD_RADIUS,
   HEIGHT,
+  MAX_ANGULAR_VELOCITY,
   MAX_DRIVE_SPEED,
   TERRAIN_THICKNESS,
   WATER_RISE_SPEED,
   WATER_START_Y,
   WHEEL_RADIUS,
-  WIDTH
+  WIDTH,
+  FRAME_TRACK_THICKNESS
 } from './car-game.constants';
 import { LEVELS } from './car-game.levels';
 import { renderFrame } from './car-game.renderer';
@@ -53,8 +56,17 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
   gameOverMessage: string | null = null;
   gameOverGradient: string | null = null;
 
+  // Persists across rounds/levels — only a full page reload clears it.
+  player1Score = 0;
+  player2Score = 0;
+
   @HostListener('window:keydown', ['$event'])
   onKeyDown(event: KeyboardEvent): void {
+    if (event.code === 'Space') {
+      event.preventDefault();
+      this.resetCars();
+      return;
+    }
     for (const car of this.cars) {
       if (event.key === car.leftKey || event.code === car.leftKey) {
         car.leftHeld = true;
@@ -136,7 +148,10 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
 
     const terrainBodies: Matter.Body[] = [];
     for (const path of this.currentLevel.paths) {
-      terrainBodies.push(...this.buildSegments(path));
+      terrainBodies.push(...this.buildSegments(path, TERRAIN_THICKNESS));
+    }
+    if (this.currentLevel.frameTrackPath) {
+      terrainBodies.push(...this.buildSegments(this.currentLevel.frameTrackPath, FRAME_TRACK_THICKNESS));
     }
     Matter.Composite.add(this.world, terrainBodies);
 
@@ -158,9 +173,10 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
       Matter.Composite.add(this.world, [this.seesawPlank, pin]);
     }
 
+    const spawnThickness = this.currentLevel.spawnSurfaceThickness ?? TERRAIN_THICKNESS;
     this.cars = [
-      this.spawnCar(this.currentLevel.car1Start, '#ef4444', '#b91c1c', '#fbbf24', '#fb923c', 'Player 1', 'ArrowLeft', 'ArrowRight'),
-      this.spawnCar(this.currentLevel.car2Start, '#3b82f6', '#1d4ed8', '#fbbf24', '#93c5fd', 'Player 2', 'KeyA', 'KeyD')
+      this.spawnCar(this.currentLevel.car1Start, spawnThickness, '#ef4444', '#b91c1c', '#fbbf24', '#fb923c', 'Player 1', 'ArrowLeft', 'ArrowRight'),
+      this.spawnCar(this.currentLevel.car2Start, spawnThickness, '#3b82f6', '#1d4ed8', '#fbbf24', '#93c5fd', 'Player 2', 'KeyA', 'KeyD')
     ];
 
     this.waterY = WATER_START_Y;
@@ -176,7 +192,7 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
    * uniformly — a "below the line" offset only makes sense while the path
    * stays roughly horizontal.
    */
-  private buildSegments(points: Point[]): Matter.Body[] {
+  private buildSegments(points: Point[], thickness: number): Matter.Body[] {
     const bodies: Matter.Body[] = [];
     for (let i = 0; i < points.length - 1; i++) {
       const p1 = points[i];
@@ -189,7 +205,7 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
       const angle = Math.atan2(dy, dx);
 
       bodies.push(
-        Matter.Bodies.rectangle(midX, midY, length + 2, TERRAIN_THICKNESS, {
+        Matter.Bodies.rectangle(midX, midY, length + 2, thickness, {
           isStatic: true,
           angle,
           friction: 1,
@@ -212,6 +228,7 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
    */
   private spawnCar(
     start: Point,
+    thickness: number,
     color: string,
     darkColor: string,
     stripeColor: string,
@@ -220,7 +237,7 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     leftKey: string,
     rightKey: string
   ): PlayerCar {
-    const startY = start.y - TERRAIN_THICKNESS / 2 - WHEEL_RADIUS - CHASSIS_HEIGHT / 2 - 4;
+    const startY = start.y - thickness / 2 - WHEEL_RADIUS - CHASSIS_HEIGHT / 2 - 4;
 
     const composite = Matter.Composites.car(start.x, startY, CHASSIS_WIDTH, CHASSIS_HEIGHT, WHEEL_RADIUS);
     const [chassis, wheelA, wheelB] = composite.bodies;
@@ -281,7 +298,7 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     if (a.label === 'head' && b.label === 'terrain') {
       const car = this.headOwners.get(a);
       if (car) {
-        this.endGame(`💥 ${car.label} Loses`, car.color, car.darkColor);
+        this.endGame(`💥 ${car.label} Loses`, this.otherCar(car));
         return true;
       }
     }
@@ -290,12 +307,16 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
       const defender = this.headOwners.get(a);
       const attacker = this.chassisOwners.get(b);
       if (defender && attacker && defender !== attacker) {
-        this.endGame(`🏆 ${attacker.label} Wins!`, attacker.color, attacker.darkColor);
+        this.endGame(`🏆 ${attacker.label} Wins!`, attacker);
         return true;
       }
     }
 
     return false;
+  }
+
+  private otherCar(car: PlayerCar): PlayerCar {
+    return this.cars.find(c => c !== car)!;
   }
 
   private loop = (): void => {
@@ -309,19 +330,43 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // Driving pushes the chassis directly at its center of mass (zero net
-    // torque) instead of spinning the wheels via setAngularVelocity — the
-    // latter acts like an infinite-torque motor and let a car flip itself
-    // over in place just by holding the accelerate key on flat ground.
+    // Driving pushes the chassis center of mass (moves the car) while also
+    // adding a slow wheel-lift torque on top: holding "right" spins the
+    // chassis angle negative — the right wheel gradually lifts, and if the
+    // key stays held long enough the car rolls all the way over into a full
+    // flip. "left" is the mirror image (left wheel lifts, positive spin).
     for (const car of this.cars) {
-      if (car.rightHeld && car.chassis.velocity.x < MAX_DRIVE_SPEED) {
-        Matter.Body.applyForce(car.chassis, car.chassis.position, { x: DRIVE_FORCE, y: 0 });
-      } else if (car.leftHeld && car.chassis.velocity.x > -MAX_DRIVE_SPEED) {
-        Matter.Body.applyForce(car.chassis, car.chassis.position, { x: -DRIVE_FORCE, y: 0 });
+      if (car.rightHeld) {
+        if (car.chassis.velocity.x < MAX_DRIVE_SPEED) {
+          Matter.Body.applyForce(car.chassis, car.chassis.position, { x: DRIVE_FORCE, y: 0 });
+        }
+        if (car.chassis.angularVelocity > -MAX_ANGULAR_VELOCITY) {
+          car.chassis.torque -= FLIP_TORQUE;
+        }
+      } else if (car.leftHeld) {
+        if (car.chassis.velocity.x > -MAX_DRIVE_SPEED) {
+          Matter.Body.applyForce(car.chassis, car.chassis.position, { x: -DRIVE_FORCE, y: 0 });
+        }
+        if (car.chassis.angularVelocity < MAX_ANGULAR_VELOCITY) {
+          car.chassis.torque += FLIP_TORQUE;
+        }
       }
     }
 
     Matter.Engine.update(this.engine, 1000 / 60);
+
+    // Once a car tips past its balance point, gravity keeps rotating it on
+    // its own — our torque above no longer has anything to do with the
+    // resulting speed. Clamping the actual post-step angularVelocity (not
+    // just gating whether we add more torque) is what keeps every flip, however
+    // it started, rolling over at the same slow, controlled pace.
+    for (const car of this.cars) {
+      if (car.chassis.angularVelocity > MAX_ANGULAR_VELOCITY) {
+        Matter.Body.setAngularVelocity(car.chassis, MAX_ANGULAR_VELOCITY);
+      } else if (car.chassis.angularVelocity < -MAX_ANGULAR_VELOCITY) {
+        Matter.Body.setAngularVelocity(car.chassis, -MAX_ANGULAR_VELOCITY);
+      }
+    }
 
     // A collision during the step above may already have ended the game —
     // don't let the water/off-map checks below override that this frame.
@@ -340,7 +385,7 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
         car.headBody.position.y + HEAD_RADIUS
       );
       if (submergedDepth >= this.waterY) {
-        this.endGame(`💦 ${car.label} Fell in Water`, car.color, car.darkColor);
+        this.endGame(`💦 ${car.label} Fell in Water`, this.otherCar(car));
         return;
       }
     }
@@ -352,9 +397,14 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private endGame(message: string, color: string, darkColor: string): void {
+  private endGame(message: string, winner: PlayerCar): void {
     this.gameOverMessage = message;
-    this.gameOverGradient = `linear-gradient(135deg, ${color} 0%, ${darkColor} 100%)`;
+    this.gameOverGradient = `linear-gradient(135deg, ${winner.color} 0%, ${winner.darkColor} 100%)`;
+    if (winner === this.cars[0]) {
+      this.player1Score++;
+    } else {
+      this.player2Score++;
+    }
   }
 
   private draw(): void {

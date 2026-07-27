@@ -67,11 +67,11 @@ function drawSkyline(ctx: CanvasRenderingContext2D): void {
 }
 
 /**
- * A straight platform, drawn as a rotated pill/stadium shape (rounded rect,
- * corner radius = half thickness) so it reads as a bar cut from the same
- * chrome material as the outer frame, matching the reference art.
+ * A straight floating platform, drawn as a plain flat slab (small corner
+ * radius, no pill/capsule ends) so it reads as a standalone ledge rather
+ * than a cut of continuous road.
  */
-function drawPillSegment(ctx: CanvasRenderingContext2D, p1: Point, p2: Point): void {
+function drawFlatPlatform(ctx: CanvasRenderingContext2D, p1: Point, p2: Point): void {
   const dx = p2.x - p1.x;
   const dy = p2.y - p1.y;
   const length = Math.hypot(dx, dy);
@@ -81,10 +81,10 @@ function drawPillSegment(ctx: CanvasRenderingContext2D, p1: Point, p2: Point): v
   ctx.translate((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
   ctx.rotate(angle);
   ctx.beginPath();
-  ctx.roundRect(-length / 2, -TERRAIN_THICKNESS / 2, length, TERRAIN_THICKNESS, TERRAIN_THICKNESS / 2);
-  ctx.fillStyle = CHROME_COLOR;
+  ctx.roundRect(-length / 2, -TERRAIN_THICKNESS / 2, length, TERRAIN_THICKNESS, 8);
+  ctx.fillStyle = '#334155';
   ctx.fill();
-  ctx.strokeStyle = '#000000';
+  ctx.strokeStyle = OUTLINE_COLOR;
   ctx.lineWidth = OUTLINE_WIDTH;
   ctx.stroke();
   ctx.restore();
@@ -142,7 +142,7 @@ function drawTerrain(ctx: CanvasRenderingContext2D, state: RenderState): void {
       continue;
     }
     if (path.length === 2) {
-      drawPillSegment(ctx, path[0], path[1]);
+      drawFlatPlatform(ctx, path[0], path[1]);
     } else {
       drawCurvedPath(ctx, path);
     }
@@ -279,9 +279,12 @@ export function renderFrame(ctx: CanvasRenderingContext2D, state: RenderState): 
   ctx.fillStyle = CHROME_COLOR;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  ctx.save();
-  traceViewport(ctx);
-  ctx.clip();
+  const clipToFrame = !state.currentLevel.hideViewportFrame;
+  if (clipToFrame) {
+    ctx.save();
+    traceViewport(ctx);
+    ctx.clip();
+  }
 
   const sky = ctx.createLinearGradient(0, 0, 0, HEIGHT);
   sky.addColorStop(0, '#fbd3c8');
@@ -296,12 +299,16 @@ export function renderFrame(ctx: CanvasRenderingContext2D, state: RenderState): 
     drawCar(ctx, car);
   }
 
-  ctx.restore();
+  if (clipToFrame) {
+    ctx.restore();
+  }
 
-  traceViewport(ctx);
-  ctx.lineWidth = VIEWPORT_OUTLINE_WIDTH;
-  ctx.strokeStyle = '#000000';
-  ctx.stroke();
+  if (!state.currentLevel.hideViewportFrame) {
+    traceViewport(ctx);
+    ctx.lineWidth = VIEWPORT_OUTLINE_WIDTH;
+    ctx.strokeStyle = '#000000';
+    ctx.stroke();
+  }
 
   drawWater(ctx, state.waterY);
 }

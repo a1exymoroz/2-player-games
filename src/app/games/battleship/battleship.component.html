@@ -1,0 +1,163 @@
+<div class="game-container">
+  <header class="game-header">
+    <a routerLink="/" class="back-button">
+      <span class="arrow">←</span>
+      <span>Back to Games</span>
+    </a>
+    <h1>Battleship</h1>
+  </header>
+
+  <div class="scoreboard">
+    <div class="score player-1" [class.active]="activePlayerIndex === 0 && phase !== 'gameover'">
+      <span class="player-label">Player 1</span>
+      <span class="score-value">{{ scores[0] }}</span>
+    </div>
+    <div class="score player-2" [class.active]="activePlayerIndex === 1 && phase !== 'gameover'">
+      <span class="player-label">Player 2</span>
+      <span class="score-value">{{ scores[1] }}</span>
+    </div>
+  </div>
+
+  @if (awaitingPass) {
+    <div class="pass-overlay">
+      <div class="pass-card">
+        <p class="pass-icon">🔄</p>
+        <h2>{{ passMessage }}</h2>
+        <p class="pass-hint">Make sure the other player isn't looking at the screen.</p>
+        <button class="btn btn-primary" (click)="dismissPass()">I'm Ready</button>
+      </div>
+    </div>
+  } @else if (phase === 'setup') {
+    <div class="setup-panel">
+      <div class="game-status">
+        <span class="status turn">Player {{ activePlayerIndex + 1 }}: place your ships</span>
+      </div>
+
+      <div class="setup-layout">
+        <div class="grid-wrapper">
+          <div class="grid own-grid" (mouseleave)="onCellLeave()">
+            @for (row of gridIndices(); track row) {
+              <div class="grid-row">
+                @for (col of gridIndices(); track col) {
+                  <div
+                    class="cell"
+                    [class.ship]="activePlayer.shipGrid[row][col]"
+                    [class.preview]="isCellInPreview(row, col)"
+                    [class.preview-valid]="isCellInPreview(row, col) && isPreviewValid()"
+                    [class.preview-invalid]="isCellInPreview(row, col) && !isPreviewValid()"
+                    (mouseenter)="onCellHover(row, col)"
+                    (click)="placeShip(row, col)">
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="side-panel">
+          <h3>Fleet</h3>
+          @if (placementError) {
+            <p class="error-msg">{{ placementError }}</p>
+          }
+
+          <ul class="ship-list">
+            @for (ship of activePlayer.unplacedShips; track ship.name) {
+              <li
+                class="ship-item"
+                [class.selected]="selectedShipName === ship.name"
+                (click)="selectShip(ship.name)">
+                <span>{{ ship.name }}</span>
+                <span class="ship-size">{{ ship.size }} cells</span>
+              </li>
+            }
+            @for (ship of activePlayer.ships; track ship.name) {
+              <li class="ship-item placed" (click)="removeShip(ship.name)">
+                <span>{{ ship.name }}</span>
+                <span class="ship-size">placed ✓ (click to undo)</span>
+              </li>
+            }
+          </ul>
+
+          <div class="setup-actions">
+            <button class="btn btn-secondary" (click)="toggleOrientation()">
+              Orientation: {{ orientation === 'H' ? 'Horizontal' : 'Vertical' }}
+            </button>
+            <button class="btn btn-secondary" (click)="randomizePlacement()">
+              Random Placement
+            </button>
+            <button
+              class="btn btn-primary"
+              [disabled]="activePlayer.unplacedShips.length > 0"
+              (click)="confirmReady()">
+              Ready for Battle
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else if (phase === 'battle') {
+    <div class="battle-panel">
+      <div class="game-status">
+        <span class="status turn">Player {{ activePlayerIndex + 1 }}: fire at Player {{ defenderIndex + 1 }}'s fleet</span>
+      </div>
+
+      <div class="grid-wrapper">
+        <div class="col-labels">
+          <span class="corner"></span>
+          @for (col of gridIndices(); track col) {
+            <span class="col-label">{{ colLabels[col] }}</span>
+          }
+        </div>
+        <div class="grid-with-rows">
+          @for (row of gridIndices(); track row) {
+            <div class="grid-row-wrapper">
+              <span class="row-label">{{ row + 1 }}</span>
+              <div class="grid-row">
+                @for (col of gridIndices(); track col) {
+                  <div
+                    class="cell attack-cell"
+                    [class.hit]="defender.shots[row][col] === 'hit'"
+                    [class.miss]="defender.shots[row][col] === 'miss'"
+                    [class.sunk]="isSunkCell(defender, row, col)"
+                    [class.shot]="defender.shots[row][col] !== null"
+                    (click)="fireAt(row, col)">
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="fleet-status">
+        @for (player of players; track $index) {
+          <div class="fleet-column">
+            <h4>Player {{ $index + 1 }} Fleet</h4>
+            <ul>
+              @for (ship of player.ships; track ship.name) {
+                <li [class.sunk]="isShipSunk(ship)">
+                  {{ ship.name }} {{ isShipSunk(ship) ? '(sunk)' : '' }}
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+    </div>
+  } @else if (phase === 'gameover') {
+    <div class="gameover-panel">
+      <p class="win-icon">🏆</p>
+      <h2>Player {{ (winnerIndex ?? 0) + 1 }} wins!</h2>
+      <p>All enemy ships have been sunk.</p>
+    </div>
+  }
+
+  <div class="actions">
+    <button class="btn btn-primary" (click)="resetGame()">
+      New Game
+    </button>
+    <button class="btn btn-secondary" (click)="resetScores()">
+      Reset Scores
+    </button>
+  </div>
+</div>

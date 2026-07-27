@@ -1,8 +1,21 @@
-import { GROUND_Y, LOOP_RADIUS, TERRAIN_SEGMENT_LENGTH, TERRAIN_THICKNESS, WIDTH } from './car-game.constants';
+import {
+  FRAME_TRACK_THICKNESS,
+  GROUND_Y,
+  HEIGHT,
+  LOOP_RADIUS,
+  TERRAIN_SEGMENT_LENGTH,
+  TERRAIN_THICKNESS,
+  VIEWPORT_MARGIN,
+  WIDTH
+} from './car-game.constants';
 import { HeightKeyPoint, LevelDefinition, Point } from './car-game.types';
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
+}
+
+function deg(degrees: number): number {
+  return (degrees * Math.PI) / 180;
 }
 
 function smoothstep(t: number): number {
@@ -81,43 +94,93 @@ function buildLoopLevelPaths(): Point[][] {
   ];
 }
 
+/**
+ * A single closed stadium-shaped track tracing EXACTLY the same rounded-pill
+ * geometry as the outer viewport frame (traceViewport() in the renderer) —
+ * the frame's own outline is the visible road, so this is assigned as a
+ * level's frameTrackPath (physics-only, never drawn) rather than a regular
+ * path. Built as one continuous polyline (straights + both semicircles)
+ * rather than separate flat/arc path entries, so it forms a single unbroken
+ * ring — and, since the last point comes back around to equal the first,
+ * buildSegments() closes the ring automatically with no separate joining
+ * logic (same technique the full-circle loops in "Loop de Loop" already
+ * rely on).
+ */
+const OVAL_CENTER_Y = HEIGHT / 2;
+const OVAL_STRAIGHT_HALF = (WIDTH - HEIGHT) / 2;
+const OVAL_RADIUS = (HEIGHT - 2 * VIEWPORT_MARGIN) / 2;
+const OVAL_GROUND_Y = OVAL_CENTER_Y + OVAL_RADIUS;
+
+function buildOvalTrackPath(): Point[] {
+  const leftCenter: Point = { x: WIDTH / 2 - OVAL_STRAIGHT_HALF, y: OVAL_CENTER_Y };
+  const rightCenter: Point = { x: WIDTH / 2 + OVAL_STRAIGHT_HALF, y: OVAL_CENTER_Y };
+  const segments = 48;
+
+  return [
+    { x: leftCenter.x, y: OVAL_CENTER_Y - OVAL_RADIUS },
+    { x: rightCenter.x, y: OVAL_CENTER_Y - OVAL_RADIUS },
+    ...arcPath(rightCenter, OVAL_RADIUS, -Math.PI / 2, Math.PI / 2, segments).slice(1),
+    { x: leftCenter.x, y: OVAL_CENTER_Y + OVAL_RADIUS },
+    ...arcPath(leftCenter, OVAL_RADIUS, Math.PI / 2, (3 * Math.PI) / 2, segments).slice(1)
+  ];
+}
+
+/**
+ * Two large hook-shaped scoops near the left/right edges — deep ~245° arcs
+ * (more than a semicircle, less than a full loop) that curl a car in from a
+ * near-flat lip rather than closing into a full loop. Cars start at each
+ * hook's true bottom point (angle PI/2 straight down from center), the one
+ * spot on any circle where the surface tangent is horizontal — matching how
+ * every other level's spawn point sits on flat ground, so spawnCar()'s
+ * simple vertical offset still places the car flush on the surface. A flat
+ * platform floats between the two hooks, out of either one's reach without
+ * built-up speed.
+ */
+const HOOK_RADIUS = 180;
+const HOOK_LEFT_CENTER: Point = { x: 170, y: 215 };
+const HOOK_RIGHT_CENTER: Point = { x: WIDTH - 170, y: 215 };
+
+function buildHookArenaPaths(): Point[][] {
+  const segments = 56;
+  return [
+    arcPath(HOOK_LEFT_CENTER, HOOK_RADIUS, deg(25), deg(270), segments),
+    arcPath(HOOK_RIGHT_CENTER, HOOK_RADIUS, deg(155), deg(-90), segments),
+    flat(0.3, 0.7, 100)
+  ];
+}
+
 export const LEVELS: LevelDefinition[] = [
   {
-    name: 'Flat Ground',
-    paths: [flat(0, 1, GROUND_Y)],
-    car1Start: { x: 120, y: GROUND_Y },
-    car2Start: { x: WIDTH - 120, y: GROUND_Y }
+    name: 'Oval Track',
+    paths: [],
+    frameTrackPath: buildOvalTrackPath(),
+    car1Start: { x: WIDTH / 2 - 120, y: OVAL_GROUND_Y },
+    car2Start: { x: WIDTH / 2 + 120, y: OVAL_GROUND_Y },
+    spawnSurfaceThickness: FRAME_TRACK_THICKNESS
   },
   {
     name: 'Floating Islands',
     paths: [
-      flat(0.04, 0.34, GROUND_Y - 30),
-      flat(0.62, 0.96, GROUND_Y - 140)
+      flat(0.20, 0.40, GROUND_Y - 100),
+      flat(0.60, 0.80, GROUND_Y - 200)
     ],
-    car1Start: { x: WIDTH * 0.1, y: GROUND_Y - 30 },
-    car2Start: { x: WIDTH * 0.9, y: GROUND_Y - 140 }
-  },
-  {
-    name: 'Valley',
-    paths: [heightMapPath([
-      { xFrac: 0, y: GROUND_Y - 90 },
-      { xFrac: 0.5, y: GROUND_Y + 60 },
-      { xFrac: 1, y: GROUND_Y - 90 }
-    ])],
-    car1Start: { x: 90, y: GROUND_Y - 90 },
-    car2Start: { x: WIDTH - 90, y: GROUND_Y - 90 }
-  },
-  {
-    name: 'Loop de Loop',
-    paths: buildLoopLevelPaths(),
-    car1Start: { x: 60, y: GROUND_Y },
-    car2Start: { x: WIDTH - 60, y: GROUND_Y }
+    frameTrackPath: buildOvalTrackPath(),
+    car1Start: { x: WIDTH * 0.3, y: GROUND_Y - 110 },
+    car2Start: { x: WIDTH * 0.7, y: GROUND_Y - 210 }
   },
   {
     name: 'See-Saw',
     paths: [],
-    car1Start: { x: WIDTH / 2 - 110, y: GROUND_Y - 60 },
-    car2Start: { x: WIDTH / 2 + 110, y: GROUND_Y - 60 },
-    seesaw: { pivot: { x: WIDTH / 2, y: GROUND_Y - 40 }, length: 340, thickness: TERRAIN_THICKNESS }
+    frameTrackPath: buildOvalTrackPath(),
+    car1Start: { x: WIDTH / 2 - 110, y: GROUND_Y - 160 },
+    car2Start: { x: WIDTH / 2 + 110, y: GROUND_Y - 160 },
+    seesaw: { pivot: { x: WIDTH / 2, y: GROUND_Y - 150 }, length: 340, thickness: TERRAIN_THICKNESS }
+  },
+  {
+    name: 'Sky Hooks',
+    paths: buildHookArenaPaths(),
+    car1Start: { x: HOOK_LEFT_CENTER.x, y: HOOK_LEFT_CENTER.y + HOOK_RADIUS },
+    car2Start: { x: HOOK_RIGHT_CENTER.x, y: HOOK_RIGHT_CENTER.y + HOOK_RADIUS },
+    hideViewportFrame: true
   }
 ];

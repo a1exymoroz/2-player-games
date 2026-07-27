@@ -1,0 +1,296 @@
+.game-container {
+  min-height: 100vh;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.game-header {
+  width: 100%;
+  max-width: 700px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+
+  .back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6b7280;
+    text-decoration: none;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+
+    &:hover { color: #667eea; }
+    .arrow { font-size: 1.2rem; }
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+.scoreboard {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+
+  .score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem 1.75rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 3px solid transparent;
+
+    &.active {
+      transform: scale(1.05);
+      border-color: #3b82f6;
+    }
+
+    .player-label { font-size: 0.85rem; color: #6b7280; }
+    .score-value { font-size: 1.4rem; font-weight: 700; color: #1f2937; }
+  }
+}
+
+.game-status .status {
+  font-size: 1.15rem;
+  font-weight: 600;
+  padding: 0.65rem 1.5rem;
+  border-radius: 30px;
+  display: inline-block;
+  background: #f3f4f6;
+  color: #374151;
+  margin-bottom: 1.25rem;
+}
+
+.pass-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+
+  .pass-card {
+    background: white;
+    border-radius: 20px;
+    padding: 3rem 2.5rem;
+    text-align: center;
+    max-width: 380px;
+
+    .pass-icon { font-size: 3rem; margin: 0 0 1rem; }
+    h2 { font-size: 1.5rem; color: #1f2937; margin-bottom: 0.75rem; }
+    .pass-hint { color: #6b7280; font-size: 0.9rem; margin-bottom: 1.5rem; }
+  }
+}
+
+.setup-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #0c4a6e 100%);
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.grid-row { display: flex; gap: 3px; }
+
+.cell {
+  width: 34px;
+  height: 34px;
+  background: #e0f2fe;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &.ship { background: #475569; }
+  &.preview-valid { background: rgba(16, 185, 129, 0.6); }
+  &.preview-invalid { background: rgba(239, 68, 68, 0.6); }
+}
+
+.side-panel {
+  min-width: 260px;
+
+  h3 { margin: 0 0 0.75rem; color: #1f2937; }
+  .error-msg { color: #dc2626; font-size: 0.85rem; margin-bottom: 0.5rem; }
+}
+
+.ship-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ship-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.55rem 0.85rem;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #374151;
+
+  &:hover { background: #f3f4f6; }
+  &.selected { border: 2px solid #667eea; }
+  &.placed { color: #059669; .ship-size { color: #059669; } }
+  .ship-size { color: #6b7280; font-size: 0.8rem; }
+}
+
+.setup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.battle-panel { display: flex; flex-direction: column; align-items: center; }
+
+.col-labels {
+  display: flex;
+  gap: 3px;
+  padding-left: 8px;
+  margin-bottom: 4px;
+
+  .corner { width: 24px; }
+  .col-label { width: 34px; text-align: center; font-size: 0.75rem; font-weight: 600; color: #6b7280; }
+}
+
+.grid-with-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #0c4a6e 100%);
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.grid-row-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+
+  .row-label { width: 18px; text-align: center; font-size: 0.75rem; font-weight: 600; color: #cbd5e1; }
+}
+
+.attack-cell {
+  background: #38bdf8;
+  position: relative;
+
+  &:hover:not(.shot) { background: #7dd3fc; }
+
+  &.miss {
+    background: #1e3a8a;
+    cursor: default;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 13px;
+      border-radius: 50%;
+      background: #cbd5e1;
+    }
+  }
+
+  &.hit {
+    background: #f97316;
+    cursor: default;
+
+    &::after {
+      content: '✕';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+    }
+  }
+
+  &.sunk { background: #7f1d1d; }
+}
+
+.fleet-status {
+  display: flex;
+  gap: 3rem;
+  margin-top: 1.5rem;
+
+  .fleet-column {
+    h4 { margin: 0 0 0.5rem; color: #1f2937; font-size: 0.95rem; }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 0.85rem;
+      color: #374151;
+
+      li {
+        padding: 0.15rem 0;
+        &.sunk { color: #dc2626; text-decoration: line-through; }
+      }
+    }
+  }
+}
+
+.gameover-panel {
+  text-align: center;
+  padding: 2rem;
+
+  .win-icon { font-size: 3rem; margin: 0 0 0.5rem; }
+  h2 { font-size: 1.75rem; color: #1f2937; margin-bottom: 0.5rem; }
+  p { color: #6b7280; }
+}
+
+.actions { display: flex; gap: 1rem; margin-top: 2rem; }
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 30px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+
+  &.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+
+    &:hover:not(:disabled) { transform: translateY(-2px); }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  &.btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+    &:hover { background: #e5e7eb; }
+  }
+}
+
+@media (max-width: 640px) {
+  .cell { width: 26px; height: 26px; }
+  .col-labels .col-label { width: 26px; }
+  .setup-layout { gap: 1rem; }
+  .side-panel { min-width: 0; width: 100%; }
+  .fleet-status { gap: 1.5rem; }
+  .game-header h1 { font-size: 2rem; }
+}

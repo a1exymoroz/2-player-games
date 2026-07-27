@@ -19,12 +19,12 @@ interface Game {
 })
 export class HomeComponent {
   games: Game[] = [
-    {
-      id: 'tic-tac-toe',
-      name: 'Tic Tac Toe',
-      description: 'Classic X and O game. Get three in a row to win!',
-      icon: '⭕',
-      route: '/games/tic-tac-toe',
+      {
+      id: 'car-game',
+      name: 'Car Duel',
+      description: 'Drive, flip, and bump your opponent off the track!',
+      icon: '🏎️',
+      route: '/games/car-game',
       players: '2 Players'
     },
     {
@@ -44,11 +44,11 @@ export class HomeComponent {
       players: '2 Players'
     },
     {
-      id: 'car-game',
-      name: 'Car Duel',
-      description: 'Drive, flip, and bump your opponent off the track!',
-      icon: '🏎️',
-      route: '/games/car-game',
+      id: 'tic-tac-toe',
+      name: 'Tic Tac Toe',
+      description: 'Classic X and O game. Get three in a row to win!',
+      icon: '⭕',
+      route: '/games/tic-tac-toe',
       players: '2 Players'
     }
   ];

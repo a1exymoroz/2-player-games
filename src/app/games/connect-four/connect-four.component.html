@@ -1,0 +1,64 @@
+<div class="game-container">
+  <header class="game-header">
+    <a routerLink="/" class="back-button">
+      <span class="arrow">←</span>
+      <span>Back to Games</span>
+    </a>
+    <h1>Connect Four</h1>
+  </header>
+
+  <div class="scoreboard">
+    <div class="score player-1" [class.active]="currentPlayer === 1 && !winner && !isDraw">
+      <span class="player-disc"></span>
+      <span class="player-label">Player 1</span>
+      <span class="score-value">{{ scores[1] }}</span>
+    </div>
+    <div class="score player-2" [class.active]="currentPlayer === 2 && !winner && !isDraw">
+      <span class="player-disc"></span>
+      <span class="player-label">Player 2</span>
+      <span class="score-value">{{ scores[2] }}</span>
+    </div>
+  </div>
+
+  <div class="game-status">
+    @if (winner) {
+      <span class="status winner">🎉 Player {{ winner }} wins!</span>
+    } @else if (isDraw) {
+      <span class="status draw">🤝 It's a draw!</span>
+    } @else {
+      <span class="status turn">Player {{ currentPlayer }}'s turn</span>
+    }
+  </div>
+
+  <div class="board">
+    @for (col of columnIndices(); track col) {
+      <div
+        class="column"
+        [class.hovered]="hoveredColumn === col"
+        (mouseenter)="onColumnHover(col)"
+        (mouseleave)="onColumnLeave()"
+        (click)="dropDisc(col)">
+        @for (row of rowIndices(); track row) {
+          <div
+            class="cell"
+            [class.p1]="board[row][col] === 1"
+            [class.p2]="board[row][col] === 2"
+            [class.winning]="isWinningCell(row, col)"
+            [class.ghost]="isGhostCell(row, col)"
+            [class.ghost-p1]="isGhostCell(row, col) && currentPlayer === 1"
+            [class.ghost-p2]="isGhostCell(row, col) && currentPlayer === 2">
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" (click)="resetGame()">
+      New Game
+    </button>
+    <button class="btn btn-secondary" (click)="resetScores()">
+      Reset Scores
+    </button>
+  </div>
+</div>

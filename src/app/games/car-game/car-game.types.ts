@@ -14,11 +14,17 @@ export interface SeesawSpec {
 
 export interface LevelDefinition {
   name: string;
-  /** Independent ground polylines — flat platforms, ramps, valley dips, loop arcs. */
+  /** Independent ground polylines — flat platforms, ramps, valley dips, loop arcs. Always drawn (chrome/platform visuals) and built into physics at TERRAIN_THICKNESS. */
   paths: Point[][];
   car1Start: Point;
   car2Start: Point;
   seesaw?: SeesawSpec;
+  /** Extra closed physics-only path with no visual of its own — used for tracks that reuse the viewport frame's own outline as their road (see FRAME_TRACK_THICKNESS). */
+  frameTrackPath?: Point[];
+  /** Thickness of whatever surface car1Start/car2Start actually rest on, for spawn-height math. Defaults to TERRAIN_THICKNESS; override with FRAME_TRACK_THICKNESS when cars start on frameTrackPath. */
+  spawnSurfaceThickness?: number;
+  /** Skip both the rounded-pill viewport clip and its outline stroke — for levels whose own terrain already reaches the canvas edges, where the frame would just double up the line. */
+  hideViewportFrame?: boolean;
 }
 
 /** One point in a height-map curve: x as a fraction of canvas width, y in canvas pixels. */
