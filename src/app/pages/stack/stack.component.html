@@ -1,0 +1,42 @@
+<div class="stack-container">
+  <header class="hero">
+    <a routerLink="/" class="back-link">← Back to games</a>
+    <h1>Tech Stack</h1>
+    <p class="subtitle">What powers 2 Player Games under the hood</p>
+  </header>
+
+  <section class="categories-grid">
+    @for (category of categories; track category.title) {
+      <div class="category-card">
+        <div class="category-header">
+          <span class="category-icon">{{ category.icon }}</span>
+          <h2>{{ category.title }}</h2>
+        </div>
+        <ul class="items-list">
+          @for (item of category.items; track item.name) {
+            <li class="item">
+              <span class="item-icon">{{ item.icon }}</span>
+              <div class="item-info">
+                <span class="item-name">{{ item.name }}</span>
+                <span class="item-detail">{{ item.detail }}</span>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </section>
+
+  <section class="not-in-stack">
+    <h2>What's Not in the Stack</h2>
+    <div class="chips">
+      @for (thing of notInStack; track thing) {
+        <span class="chip">{{ thing }}</span>
+      }
+    </div>
+  </section>
+
+  <footer class="summary">
+    <p>A single-page <strong>Angular 17</strong> app with <strong>TypeScript</strong> and <strong>SCSS</strong>, using standalone components and client-side game logic — frontend-only, built for local 2-player play on one device.</p>
+  </footer>
+</div>

@@ -42,6 +42,14 @@ export class HomeComponent {
       icon: '🚢',
       route: '/games/battleship',
       players: '2 Players'
+    },
+    {
+      id: 'car-game',
+      name: 'Car Duel',
+      description: 'Drive, flip, and bump your opponent off the track!',
+      icon: '🏎️',
+      route: '/games/car-game',
+      players: '2 Players'
     }
   ];
 }

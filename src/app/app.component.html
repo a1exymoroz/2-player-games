@@ -1,1 +1,12 @@
 <router-outlet />
+
+<a
+  routerLink="/stack"
+  routerLinkActive="stack-fab--hidden"
+  [routerLinkActiveOptions]="{ exact: true }"
+  class="stack-fab"
+  aria-label="Tech Stack"
+>
+  <span class="stack-fab-icon">🧰</span>
+  <span class="stack-fab-label">Tech Stack</span>
+</a>
