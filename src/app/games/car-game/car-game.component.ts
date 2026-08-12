@@ -66,6 +66,16 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
   readonly fullscreenSupported = !!document.documentElement.requestFullscreen;
   isFullscreen = false;
 
+  // iOS Safari has no Fullscreen API at all, so fullscreenSupported is
+  // always false there — but launching from a Home Screen icon gets a
+  // chrome-free view by a different route, which is what this steers
+  // unsupported browsers toward instead. Suppressed once already installed
+  // that way (both the iOS-specific flag and the standard PWA media query).
+  readonly showInstallHint =
+    !this.fullscreenSupported &&
+    !(navigator as Navigator & { standalone?: boolean }).standalone &&
+    !window.matchMedia('(display-mode: standalone)').matches;
+
   @HostListener('document:fullscreenchange')
   onFullscreenChange(): void {
     this.isFullscreen = !!document.fullscreenElement;

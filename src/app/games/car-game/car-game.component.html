@@ -10,6 +10,9 @@
       <p class="rotate-hint__fallback">Rotates automatically — if it doesn't, turn your device sideways.</p>
     } @else {
       <p class="rotate-hint__fallback">Turn your device sideways to play.</p>
+      @if (showInstallHint) {
+        <p class="rotate-hint__install-tip">Tip: for a fullscreen, tab-free view, add this page to your Home Screen (Share → Add to Home Screen) and launch it from there.</p>
+      }
     }
   </div>
 

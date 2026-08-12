@@ -1,0 +1,16 @@
+{
+  "name": "2 Player Games",
+  "short_name": "2P Games",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3e8f5",
+  "theme_color": "#667eea",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

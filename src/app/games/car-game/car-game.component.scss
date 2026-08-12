@@ -340,6 +340,14 @@
     color: #d1d5db;
     max-width: 24ch;
   }
+
+  .rotate-hint__install-tip {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: #9ca3af;
+    max-width: 26ch;
+    margin-top: -0.5rem;
+  }
 }
 
 @keyframes rotate-hint-spin {
