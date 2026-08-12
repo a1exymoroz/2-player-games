@@ -60,6 +60,52 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
   player1Score = 0;
   player2Score = 0;
 
+  // Only the Fullscreen API can hide the browser's own tab/address bar —
+  // no amount of CSS sizing reaches that chrome, which is the whole point
+  // of this button on mobile.
+  readonly fullscreenSupported = !!document.documentElement.requestFullscreen;
+  isFullscreen = false;
+
+  @HostListener('document:fullscreenchange')
+  onFullscreenChange(): void {
+    this.isFullscreen = !!document.fullscreenElement;
+    if (!this.isFullscreen) {
+      // Undo the lock from toggleFullscreen() so the phone can rotate freely
+      // again once the player backs out of fullscreen — "locked until you go
+      // back", not locked forever.
+      this.unlockOrientation();
+    }
+  }
+
+  toggleFullscreen(): void {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement
+        .requestFullscreen()
+        .then(() => this.lockLandscape())
+        .catch(() => {});
+    }
+  }
+
+  /**
+   * Best-effort: the Orientation Lock API only exists on Chromium/Android
+   * (never on Safari/iOS), and even there it requires an active fullscreen
+   * element — hence chaining this off requestFullscreen()'s success rather
+   * than calling it standalone. Where it's unsupported, the rotate-hint's
+   * fallback instruction ("turn your device sideways") is what carries the
+   * player through instead.
+   */
+  private lockLandscape(): void {
+    (screen.orientation as ScreenOrientation & { lock?(orientation: string): Promise<void> })
+      ?.lock?.('landscape')
+      .catch(() => {});
+  }
+
+  private unlockOrientation(): void {
+    (screen.orientation as ScreenOrientation & { unlock?(): void })?.unlock?.();
+  }
+
   @HostListener('window:keydown', ['$event'])
   onKeyDown(event: KeyboardEvent): void {
     if (event.code === 'Space') {

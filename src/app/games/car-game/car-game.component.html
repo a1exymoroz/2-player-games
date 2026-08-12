@@ -4,7 +4,13 @@
       <rect x="30" y="10" width="40" height="80" rx="8" fill="none" stroke="white" stroke-width="5"/>
       <line x1="43" y1="80" x2="57" y2="80" stroke="white" stroke-width="5" stroke-linecap="round"/>
     </svg>
-    <p>Rotate your device to play</p>
+    <p class="rotate-hint__title">Car Duel plays best in landscape</p>
+    @if (fullscreenSupported) {
+      <button type="button" class="rotate-hint__cta" (click)="toggleFullscreen()">Enter Fullscreen</button>
+      <p class="rotate-hint__fallback">Rotates automatically — if it doesn't, turn your device sideways.</p>
+    } @else {
+      <p class="rotate-hint__fallback">Turn your device sideways to play.</p>
+    }
   </div>
 
   <header class="game-header">
@@ -19,6 +25,24 @@
         <span class="level-name">{{ currentLevel.name }} <span class="level-count">{{ currentLevelIndex + 1 }}/{{ levelCount }}</span></span>
         <button class="level-btn" (click)="changeLevel(1)" aria-label="Next level">▶</button>
       </div>
+      @if (fullscreenSupported) {
+        <button
+          type="button"
+          class="fullscreen-btn"
+          (click)="toggleFullscreen()"
+          [attr.aria-label]="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
+        >
+          @if (!isFullscreen) {
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>
+            </svg>
+          } @else {
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>
+            </svg>
+          }
+        </button>
+      }
       <button type="button" class="reset-icon-btn" (click)="resetCars()" aria-label="Reset positions">↺</button>
     </div>
   </header>
