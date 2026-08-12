@@ -142,8 +142,13 @@
 .meta-board {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
   gap: 8px;
-  width: min(92vw, 600px);
+  // 100% of the flex item's available width already excludes
+  // .game-container's own padding — vw units don't, which is what let this
+  // overflow past the padded edge on narrow screens.
+  width: 100%;
+  max-width: 600px;
   aspect-ratio: 1 / 1;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 8px;
@@ -155,6 +160,13 @@
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  // Grid items default to min-width/min-height: auto, which stops a track
+  // from shrinking below its content's own minimum size — a cell with an
+  // "X"/"O" glyph has more min-content width than an empty one, so without
+  // this, rows distort unevenly depending on which cells are filled.
+  min-width: 0;
+  min-height: 0;
   gap: 4px;
   background: rgba(255, 255, 255, 0.15);
   border-radius: 10px;
@@ -177,6 +189,8 @@
 
 .cell {
   width: 100%;
+  min-width: 0;
+  min-height: 0;
   aspect-ratio: 1 / 1;
   background: white;
   // A real border (not just the gap's background color) so the 3x3 grid
