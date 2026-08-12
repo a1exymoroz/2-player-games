@@ -1,0 +1,299 @@
+.game-container {
+  min-height: 100vh;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.game-header {
+  width: 100%;
+  max-width: 640px;
+  margin-bottom: 2rem;
+  text-align: center;
+
+  .back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6b7280;
+    text-decoration: none;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #667eea;
+    }
+
+    .arrow {
+      font-size: 1.2rem;
+    }
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+.scoreboard {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+
+  .score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 3px solid transparent;
+    transition: all 0.3s;
+
+    &.active {
+      transform: scale(1.05);
+    }
+
+    &.player-x.active {
+      border-color: #ef4444;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+    }
+
+    &.player-o.active {
+      border-color: #3b82f6;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .player-symbol {
+      font-size: 2rem;
+      font-weight: 800;
+    }
+
+    .player-label {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+
+    .score-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-top: 0.5rem;
+    }
+  }
+
+  .player-x .player-symbol {
+    color: #ef4444;
+  }
+
+  .player-o .player-symbol {
+    color: #3b82f6;
+  }
+}
+
+.game-status {
+  margin-bottom: 1.5rem;
+  text-align: center;
+
+  .status {
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 30px;
+    display: inline-block;
+
+    &.turn {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    &.winner {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    &.draw {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+    }
+  }
+
+  .hint {
+    font-size: 0.8rem;
+    font-weight: 500;
+    opacity: 0.7;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.meta-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: min(92vw, 600px);
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 8px;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+.sub-board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 4px;
+  transition: background 0.2s, box-shadow 0.2s;
+
+  &.active {
+    background: white;
+    box-shadow: 0 0 0 3px #fbbf24, 0 8px 16px -4px rgba(0, 0, 0, 0.25);
+  }
+
+  &.resolved {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  &.winning {
+    box-shadow: 0 0 0 3px #10b981, 0 8px 20px -4px rgba(16, 185, 129, 0.5);
+  }
+}
+
+.cell {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: white;
+  border: none;
+  border-radius: 4px;
+  font-size: clamp(0.9rem, 3.2vw, 1.6rem);
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover:not(:disabled) {
+    background: #f3f4f6;
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+
+  &.x .cell-content {
+    color: #ef4444;
+  }
+
+  &.o .cell-content {
+    color: #3b82f6;
+  }
+
+  &.winning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  }
+
+  .cell-content {
+    animation: pop 0.2s ease-out;
+  }
+}
+
+@keyframes pop {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+// Covers a decided sub-board with its result so old X/O marks don't stay
+// visible/confusable with the still-live boards around it.
+.sub-board-result {
+  position: absolute;
+  inset: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: clamp(2rem, 9vw, 4rem);
+  font-weight: 900;
+  pointer-events: none;
+
+  &.x {
+    color: rgba(239, 68, 68, 0.85);
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  &.o {
+    color: rgba(59, 130, 246, 0.85);
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  &.draw {
+    color: rgba(107, 114, 128, 0.85);
+    background: rgba(255, 255, 255, 0.6);
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn {
+  padding: 0.85rem 2rem;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+
+  &.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.5);
+    }
+  }
+
+  &.btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+
+    &:hover {
+      background: #e5e7eb;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .scoreboard {
+    gap: 1rem;
+
+    .score {
+      padding: 0.75rem 1.25rem;
+    }
+  }
+
+  .game-header h1 {
+    font-size: 1.8rem;
+  }
+}

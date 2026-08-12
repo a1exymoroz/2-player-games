@@ -8,6 +8,7 @@ A collection of classic 2-player games built with Angular 17, meant to be played
 - 🔴 **Connect Four** — Classic disc-drop strategy game. Get four in a row (horizontally, vertically, or diagonally) before your opponent.
 - 🚢 **Battleship** — Place your fleet, then take turns firing at your opponent's grid to sink their ships first. Pass-and-play on a single device.
 - ⭕ **Tic Tac Toe** — The classic X and O game. Get three in a row to win.
+- 🧩 **Ultimate Tic Tac Toe** — A 3×3 grid of tic-tac-toe boards. The cell you play sends your opponent to the matching board next; win 3 boards in a row on the meta-board to take the game.
 
 ## Getting Started
 

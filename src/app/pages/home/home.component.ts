@@ -50,6 +50,14 @@ export class HomeComponent {
       icon: '⭕',
       route: '/games/tic-tac-toe',
       players: '2 Players'
+    },
+    {
+      id: 'ultimate-tic-tac-toe',
+      name: 'Ultimate Tic Tac Toe',
+      description: 'A grid of grids — win 3 boards in a row to take it all!',
+      icon: '🧩',
+      route: '/games/ultimate-tic-tac-toe',
+      players: '2 Players'
     }
   ];
 }
