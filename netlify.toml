@@ -1,0 +1,11 @@
+[build]
+  command = "npm run build"
+  publish = "dist/two-player-games/browser"
+
+# Angular is a client-side router — without this, loading a deep link like
+# /games/car-game directly (not via in-app navigation) 404s on a static host,
+# since there's no file at that literal path.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
