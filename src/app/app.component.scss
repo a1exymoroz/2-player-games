@@ -26,6 +26,18 @@
   }
 }
 
+// Car Duel's full-screen mobile-landscape layout floats its own fixed
+// controls (P1/P2 pads, reset) edge-to-edge — this FAB would sit on top of
+// them, so it steps aside while that layout is active (see
+// car-game.component.ts, which toggles the body class).
+:host-context(body.car-duel-active) {
+  @media ((hover: none) and (pointer: coarse) and (orientation: landscape)), ((max-height: 500px) and (orientation: landscape)) {
+    .stack-fab {
+      display: none;
+    }
+  }
+}
+
 .stack-fab-icon {
   font-size: 1.1rem;
 }

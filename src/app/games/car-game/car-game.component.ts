@@ -87,6 +87,24 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  /**
+   * Drives the same leftHeld/rightHeld flags as the keyboard handlers, so the
+   * on-screen touch buttons (shown on mobile) and physical keys are
+   * interchangeable from update()'s point of view.
+   */
+  setControlHeld(carIndex: number, direction: 'left' | 'right', held: boolean, event?: Event): void {
+    event?.preventDefault();
+    const car = this.cars[carIndex];
+    if (!car) {
+      return;
+    }
+    if (direction === 'left') {
+      car.leftHeld = held;
+    } else {
+      car.rightHeld = held;
+    }
+  }
+
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
     canvas.width = WIDTH;
@@ -115,6 +133,11 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
 
     this.loadLevel(0);
     this.loop();
+
+    // Lets the global Tech Stack FAB (declared outside this component, in
+    // AppComponent) hide itself only while this full-screen mobile layout is
+    // active — see app.component.scss's :host-context rule.
+    document.body.classList.add('car-duel-active');
   }
 
   ngOnDestroy(): void {
@@ -123,6 +146,7 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
       Matter.World.clear(this.world, false);
       Matter.Engine.clear(this.engine);
     }
+    document.body.classList.remove('car-duel-active');
   }
 
   resetCars(): void {

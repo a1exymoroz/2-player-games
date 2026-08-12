@@ -77,6 +77,20 @@
       font-size: 0.85rem;
     }
   }
+
+  .header-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+}
+
+// Hidden except in the mobile-landscape overlay below, where it replaces the
+// bottom Reset Positions pill (that pill covers too much of the track at
+// landscape phone heights).
+.reset-icon-btn {
+  display: none;
 }
 
 .track-wrapper {
@@ -191,6 +205,254 @@
   display: flex;
   gap: 1rem;
   margin-top: 1.5rem;
+}
+
+.mobile-controls {
+  display: none;
+  width: 100%;
+  max-width: 900px;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 1.5rem;
+  gap: 1rem;
+}
+
+.control-pad {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  // Color is the only player indicator (no P1/P2 label) — it matches each
+  // car's own body color from car-game.component.ts's spawnCar() calls.
+  &--red .control-btn {
+    background: #ef4444;
+
+    &:active {
+      background: #b91c1c;
+    }
+  }
+
+  &--blue .control-btn {
+    background: #3b82f6;
+
+    &:active {
+      background: #1d4ed8;
+    }
+  }
+}
+
+.control-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: #9ca3af;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.1s, background 0.1s;
+
+  &:active {
+    transform: scale(0.92);
+  }
+}
+
+// True touchscreens (mobile/tablet), or a narrow viewport for convenience —
+// keyboard hints stay meaningless without a physical keyboard, so swap them
+// for tappable controls instead.
+@media (hover: none) and (pointer: coarse), (max-width: 700px) {
+  .mobile-controls {
+    display: flex;
+  }
+
+  .hint {
+    display: none;
+  }
+}
+
+.rotate-hint {
+  display: none;
+}
+
+// Portrait on a touch device (or a narrow desktop window standing in for
+// one): the 2:1 track is cramped this way and the control pads need the
+// width a landscape screen gives them, so block play with a rotate prompt
+// instead of rendering a squeezed layout.
+@media ((hover: none) and (pointer: coarse) and (orientation: portrait)), ((max-width: 700px) and (orientation: portrait)) {
+  .rotate-hint {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem;
+    text-align: center;
+    background: rgba(17, 24, 39, 0.94);
+    color: white;
+
+    p {
+      font-size: 1.1rem;
+      font-weight: 600;
+      max-width: 20ch;
+    }
+  }
+
+  .rotate-hint__icon {
+    width: 56px;
+    height: 56px;
+    animation: rotate-hint-spin 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes rotate-hint-spin {
+  0%, 15% { transform: rotate(0deg); }
+  50%, 65% { transform: rotate(-90deg); }
+  100% { transform: rotate(-90deg); }
+}
+
+// Landscape on a touch device (or a short desktop window standing in for
+// one): let the track claim the entire viewport and float the HUD
+// (header/controls/reset) on top of it instead of stacking them in flow,
+// since a phone in landscape has no vertical room to spare for that.
+@media ((hover: none) and (pointer: coarse) and (orientation: landscape)), ((max-height: 500px) and (orientation: landscape)) {
+  .game-container {
+    min-height: 100dvh;
+    padding: 0;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .game-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    margin: 0;
+    padding: 0.35rem 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(17, 24, 39, 0.55);
+
+    .back-button {
+      margin-bottom: 0;
+      color: white;
+      font-size: 0.8rem;
+
+      span:last-child {
+        display: none;
+      }
+    }
+
+    h1 {
+      display: none;
+    }
+
+    .level-switcher {
+      margin-top: 0;
+    }
+
+    .level-btn {
+      width: 24px;
+      height: 24px;
+      font-size: 0.7rem;
+    }
+
+    .level-name {
+      color: white;
+      font-size: 0.75rem;
+      min-width: 0;
+
+      .level-count {
+        color: #d1d5db;
+      }
+    }
+  }
+
+  .reset-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: #f3f4f6;
+    color: #374151;
+    font-size: 0.85rem;
+    cursor: pointer;
+
+    &:active {
+      background: #e5e7eb;
+    }
+  }
+
+  .track-wrapper {
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+  }
+
+  .track {
+    width: 100%;
+    height: 100%;
+    // A phone's aspect ratio rarely matches the track's fixed 900:450 —
+    // object-fit: cover crops the overflow instead of leaving letterbox
+    // gutters, which is what "use the whole screen" actually requires here.
+    object-fit: cover;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .scoreboard {
+    top: 8px;
+  }
+
+  .mobile-controls {
+    position: fixed;
+    inset: 0;
+    max-width: none;
+    margin: 0;
+    align-items: flex-end;
+    pointer-events: none;
+    z-index: 20;
+  }
+
+  .control-pad {
+    pointer-events: auto;
+    gap: 0.5rem;
+    margin-bottom: 10px;
+
+    &--red {
+      margin-left: 10px;
+    }
+
+    &--blue {
+      margin-right: 10px;
+    }
+  }
+
+  .control-btn {
+    width: 42px;
+    height: 42px;
+    font-size: 1.05rem;
+  }
+
+  // Replaced by .reset-icon-btn in the header — the full-size pill would sit
+  // right on top of the track at these heights.
+  .actions {
+    display: none;
+  }
 }
 
 .btn {

@@ -1,14 +1,25 @@
 <div class="game-container">
+  <div class="rotate-hint">
+    <svg class="rotate-hint__icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="30" y="10" width="40" height="80" rx="8" fill="none" stroke="white" stroke-width="5"/>
+      <line x1="43" y1="80" x2="57" y2="80" stroke="white" stroke-width="5" stroke-linecap="round"/>
+    </svg>
+    <p>Rotate your device to play</p>
+  </div>
+
   <header class="game-header">
     <a routerLink="/" class="back-button">
       <span class="arrow">←</span>
       <span>Back to Games</span>
     </a>
     <h1>Car Duel</h1>
-    <div class="level-switcher">
-      <button class="level-btn" (click)="changeLevel(-1)" aria-label="Previous level">◀</button>
-      <span class="level-name">{{ currentLevel.name }} <span class="level-count">{{ currentLevelIndex + 1 }}/{{ levelCount }}</span></span>
-      <button class="level-btn" (click)="changeLevel(1)" aria-label="Next level">▶</button>
+    <div class="header-controls">
+      <div class="level-switcher">
+        <button class="level-btn" (click)="changeLevel(-1)" aria-label="Previous level">◀</button>
+        <span class="level-name">{{ currentLevel.name }} <span class="level-count">{{ currentLevelIndex + 1 }}/{{ levelCount }}</span></span>
+        <button class="level-btn" (click)="changeLevel(1)" aria-label="Next level">▶</button>
+      </div>
+      <button type="button" class="reset-icon-btn" (click)="resetCars()" aria-label="Reset positions">↺</button>
     </div>
   </header>
 
@@ -32,6 +43,50 @@
     <span class="player-hint player-hint--red">Player 1: <kbd>←</kbd> reverse · <kbd>→</kbd> accelerate</span>
     <span class="player-hint player-hint--blue">Player 2: <kbd>A</kbd> reverse · <kbd>D</kbd> accelerate</span>
     <span class="player-hint">Reset: <kbd>Space</kbd></span>
+  </div>
+
+  <div class="mobile-controls">
+    <div class="control-pad control-pad--red">
+      <button
+        type="button"
+        class="control-btn"
+        aria-label="Player 1 reverse"
+        (pointerdown)="setControlHeld(0, 'left', true, $event)"
+        (pointerup)="setControlHeld(0, 'left', false, $event)"
+        (pointerleave)="setControlHeld(0, 'left', false, $event)"
+        (pointercancel)="setControlHeld(0, 'left', false, $event)"
+      >◀</button>
+      <button
+        type="button"
+        class="control-btn"
+        aria-label="Player 1 accelerate"
+        (pointerdown)="setControlHeld(0, 'right', true, $event)"
+        (pointerup)="setControlHeld(0, 'right', false, $event)"
+        (pointerleave)="setControlHeld(0, 'right', false, $event)"
+        (pointercancel)="setControlHeld(0, 'right', false, $event)"
+      >▶</button>
+    </div>
+
+    <div class="control-pad control-pad--blue">
+      <button
+        type="button"
+        class="control-btn"
+        aria-label="Player 2 reverse"
+        (pointerdown)="setControlHeld(1, 'left', true, $event)"
+        (pointerup)="setControlHeld(1, 'left', false, $event)"
+        (pointerleave)="setControlHeld(1, 'left', false, $event)"
+        (pointercancel)="setControlHeld(1, 'left', false, $event)"
+      >◀</button>
+      <button
+        type="button"
+        class="control-btn"
+        aria-label="Player 2 accelerate"
+        (pointerdown)="setControlHeld(1, 'right', true, $event)"
+        (pointerup)="setControlHeld(1, 'right', false, $event)"
+        (pointerleave)="setControlHeld(1, 'right', false, $event)"
+        (pointercancel)="setControlHeld(1, 'right', false, $event)"
+      >▶</button>
+    </div>
   </div>
 
   <div class="actions">
