@@ -231,19 +231,21 @@
 
   // Color is the only player indicator (no P1/P2 label) — it matches each
   // car's own body color from car-game.component.ts's spawnCar() calls.
+  // Translucent so the track stays visible underneath instead of the
+  // buttons blocking the view of the road/cars.
   &--red .control-btn {
-    background: #ef4444;
+    background: rgba(239, 68, 68, 0.45);
 
     &:active {
-      background: #b91c1c;
+      background: rgba(185, 28, 28, 0.65);
     }
   }
 
   &--blue .control-btn {
-    background: #3b82f6;
+    background: rgba(59, 130, 246, 0.45);
 
     &:active {
-      background: #1d4ed8;
+      background: rgba(29, 78, 216, 0.65);
     }
   }
 }
@@ -481,9 +483,9 @@
   }
 
   .control-btn {
-    width: 42px;
-    height: 42px;
-    font-size: 1.05rem;
+    width: 64px;
+    height: 64px;
+    font-size: 1.6rem;
   }
 
   // Replaced by .reset-icon-btn in the header — the full-size pill would sit
