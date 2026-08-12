@@ -179,7 +179,10 @@
   width: 100%;
   aspect-ratio: 1 / 1;
   background: white;
-  border: none;
+  // A real border (not just the gap's background color) so the 3x3 grid
+  // stays visible even on an active board, whose own background is also
+  // white — background-color contrast alone doesn't show through there.
+  border: 1.5px solid rgba(31, 41, 55, 0.12);
   border-radius: 4px;
   font-size: clamp(0.9rem, 3.2vw, 1.6rem);
   font-weight: 800;
