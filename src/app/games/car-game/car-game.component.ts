@@ -49,16 +49,29 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
   private animationFrameId = 0;
   private waterY = WATER_START_Y;
 
-  readonly levelCount = LEVELS.length;
   currentLevelIndex = 0;
   currentLevel: LevelDefinition = LEVELS[0];
 
   gameOverMessage: string | null = null;
   gameOverGradient: string | null = null;
 
-  // Persists across rounds/levels — only a full page reload clears it.
+  // A match is best-of-`totalRounds`, so winsToClinch is a strict majority —
+  // this only guarantees an unambiguous, tie-free finish while totalRounds
+  // stays odd.
+  readonly totalRounds = 11;
+  private readonly winsToClinch = Math.floor(this.totalRounds / 2) + 1;
+  roundNumber = 1;
+
+  private levelBag: number[] = [];
+  private bagCursor = 0;
+
+  // Reset to 0 at the start of every match by startNewMatch().
   player1Score = 0;
   player2Score = 0;
+
+  get isMatchOver(): boolean {
+    return this.player1Score >= this.winsToClinch || this.player2Score >= this.winsToClinch;
+  }
 
   // Only the Fullscreen API can hide the browser's own tab/address bar —
   // no amount of CSS sizing reaches that chrome, which is the whole point
@@ -120,7 +133,7 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
   onKeyDown(event: KeyboardEvent): void {
     if (event.code === 'Space') {
       event.preventDefault();
-      this.resetCars();
+      this.primaryAction();
       return;
     }
     for (const car of this.cars) {
@@ -187,7 +200,7 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
       }
     });
 
-    this.loadLevel(0);
+    this.startNewMatch();
     this.loop();
 
     // Lets the global Tech Stack FAB (declared outside this component, in
@@ -205,13 +218,60 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     document.body.classList.remove('car-duel-active');
   }
 
-  resetCars(): void {
+  /**
+   * The single entry point bound to Space and both reset/next buttons — what
+   * it does depends entirely on the current round/match state, since all
+   * three actions (replay this round, advance to the next round, start a
+   * fresh match) share the same input.
+   */
+  primaryAction(): void {
+    if (!this.gameOverMessage) {
+      this.resetCurrentRound();
+    } else if (this.isMatchOver) {
+      this.startNewMatch();
+    } else {
+      this.advanceRound();
+    }
+  }
+
+  private resetCurrentRound(): void {
     this.loadLevel(this.currentLevelIndex);
   }
 
-  changeLevel(delta: number): void {
-    const next = (this.currentLevelIndex + delta + LEVELS.length) % LEVELS.length;
-    this.loadLevel(next);
+  private advanceRound(): void {
+    this.roundNumber++;
+    this.loadLevel(this.nextLevelIndex());
+  }
+
+  private startNewMatch(): void {
+    this.player1Score = 0;
+    this.player2Score = 0;
+    this.roundNumber = 1;
+    this.levelBag = [];
+    this.bagCursor = 0;
+    this.loadLevel(this.nextLevelIndex());
+  }
+
+  /**
+   * Draws from a shuffled bag of every level index, reshuffling once
+   * exhausted — so no level repeats before every other level has appeared,
+   * while still scaling automatically to however many levels LEVELS holds.
+   */
+  private nextLevelIndex(): number {
+    if (this.bagCursor >= this.levelBag.length) {
+      this.levelBag = this.buildShuffledBag();
+      this.bagCursor = 0;
+    }
+    return this.levelBag[this.bagCursor++];
+  }
+
+  private buildShuffledBag(): number[] {
+    const bag = LEVELS.map((_, i) => i);
+    for (let i = bag.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [bag[i], bag[j]] = [bag[j], bag[i]];
+    }
+    return bag;
   }
 
   /**
@@ -473,17 +533,24 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     // Safety net: a car that flies far off the level (e.g. off a see-saw
     // with nothing below it yet) gets a silent reset rather than falling forever.
     if (this.cars.some(car => car.chassis.position.y > HEIGHT + 250)) {
-      this.resetCars();
+      this.resetCurrentRound();
     }
   }
 
   private endGame(message: string, winner: PlayerCar): void {
-    this.gameOverMessage = message;
     this.gameOverGradient = `linear-gradient(135deg, ${winner.color} 0%, ${winner.darkColor} 100%)`;
     if (winner === this.cars[0]) {
       this.player1Score++;
     } else {
       this.player2Score++;
+    }
+
+    if (this.isMatchOver) {
+      const winnerScore = winner === this.cars[0] ? this.player1Score : this.player2Score;
+      const loserScore = winner === this.cars[0] ? this.player2Score : this.player1Score;
+      this.gameOverMessage = `🏆 ${winner.label} Wins the Match ${winnerScore}-${loserScore}!`;
+    } else {
+      this.gameOverMessage = message;
     }
   }
 
