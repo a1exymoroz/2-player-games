@@ -32,7 +32,7 @@ export const FRAME_TRACK_THICKNESS = OUTLINE_WIDTH + 10;
 
 /** Starts below the visible canvas so the hazard isn't immediately in view. */
 export const WATER_START_Y = HEIGHT + 60;
-export const WATER_RISE_SPEED = 1.2; // pixels per second — tune this to adjust time pressure
+export const WATER_RISE_SPEED = 4; // pixels per second — tune this to adjust time pressure
 
 /** Outer "device frame" color the pill-shaped viewport is clipped from. */
 export const CHROME_COLOR = '#374151';
