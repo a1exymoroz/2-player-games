@@ -176,11 +176,11 @@ export const LEVELS: LevelDefinition[] = [
     car2Start: { x: WIDTH / 2 + 110, y: GROUND_Y - 160 },
     seesaw: { pivot: { x: WIDTH / 2, y: GROUND_Y - 150 }, length: 340, thickness: TERRAIN_THICKNESS }
   },
-  {
-    name: 'Sky Hooks',
-    paths: buildHookArenaPaths(),
-    car1Start: { x: HOOK_LEFT_CENTER.x, y: HOOK_LEFT_CENTER.y + HOOK_RADIUS },
-    car2Start: { x: HOOK_RIGHT_CENTER.x, y: HOOK_RIGHT_CENTER.y + HOOK_RADIUS },
-    hideViewportFrame: true
-  }
+  // {
+  //   name: 'Sky Hooks',
+  //   paths: buildHookArenaPaths(),
+  //   car1Start: { x: HOOK_LEFT_CENTER.x, y: HOOK_LEFT_CENTER.y + HOOK_RADIUS },
+  //   car2Start: { x: HOOK_RIGHT_CENTER.x, y: HOOK_RIGHT_CENTER.y + HOOK_RADIUS },
+  //   hideViewportFrame: true
+  // }
 ];
