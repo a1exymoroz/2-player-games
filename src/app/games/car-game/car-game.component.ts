@@ -12,6 +12,8 @@ import {
   HEIGHT,
   MAX_ANGULAR_VELOCITY,
   MAX_DRIVE_SPEED,
+  ROUND_ADVANCE_DELAY_MS,
+  WHEEL_MOTOR_RESPONSE,
   TERRAIN_THICKNESS,
   WATER_RISE_SPEED,
   WATER_START_Y,
@@ -45,9 +47,16 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
   // who's involved without stashing extra properties on the Matter body.
   private chassisOwners = new WeakMap<Matter.Body, PlayerCar>();
   private headOwners = new WeakMap<Matter.Body, PlayerCar>();
+  private wheelOwners = new WeakMap<Matter.Body, PlayerCar>();
 
   private animationFrameId = 0;
   private waterY = WATER_START_Y;
+
+  // Pending "load the next round" timer set by endGame() once a round is
+  // decided — so play advances on its own after a short results pause. Cleared
+  // by loadLevel() (which every replay/advance/new-match path runs through), so
+  // a player who skips ahead with Space/button never double-advances.
+  private roundAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
 
   currentLevelIndex = 0;
   currentLevel: LevelDefinition = LEVELS[0];
@@ -190,6 +199,9 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     // once — it survives World.clear() on every level change because the
     // engine itself is never recreated, only its contents.
     Matter.Events.on(this.engine, 'collisionStart', (event: Matter.IEventCollision<Matter.Engine>) => {
+      for (const pair of event.pairs) {
+        this.trackWheelContact(pair.bodyA, pair.bodyB, 1);
+      }
       if (this.gameOverMessage) {
         return;
       }
@@ -197,6 +209,16 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
         if (this.resolveCollision(pair.bodyA, pair.bodyB) || this.resolveCollision(pair.bodyB, pair.bodyA)) {
           break;
         }
+      }
+    });
+
+    // Wheel↔terrain contact count per car — a car is "grounded" while it's > 0.
+    // Only used to decide when to apply the calm-driving angular-velocity clamp:
+    // once airborne we stop fighting the car's spin so a flip actually launches
+    // it far enough to land back on a platform.
+    Matter.Events.on(this.engine, 'collisionEnd', (event: Matter.IEventCollision<Matter.Engine>) => {
+      for (const pair of event.pairs) {
+        this.trackWheelContact(pair.bodyA, pair.bodyB, -1);
       }
     });
 
@@ -211,6 +233,7 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     cancelAnimationFrame(this.animationFrameId);
+    this.clearRoundAdvanceTimer();
     if (this.engine) {
       Matter.World.clear(this.world, false);
       Matter.Engine.clear(this.engine);
@@ -236,6 +259,13 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
 
   private resetCurrentRound(): void {
     this.loadLevel(this.currentLevelIndex);
+  }
+
+  private clearRoundAdvanceTimer(): void {
+    if (this.roundAdvanceTimer !== null) {
+      clearTimeout(this.roundAdvanceTimer);
+      this.roundAdvanceTimer = null;
+    }
   }
 
   private advanceRound(): void {
@@ -280,6 +310,7 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
    * previous level's bodies out individually.
    */
   private loadLevel(index: number): void {
+    this.clearRoundAdvanceTimer();
     this.currentLevelIndex = index;
     this.currentLevel = LEVELS[index];
 
@@ -314,9 +345,12 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     }
 
     const spawnThickness = this.currentLevel.spawnSurfaceThickness ?? TERRAIN_THICKNESS;
+    // Keys are passed as (reverseKey, accelerateKey): accelerate always drives
+    // the car toward its opponent. Player 2 faces left, so its natural "toward
+    // the enemy" key is A and its "back away" key is D — hence the swapped order.
     this.cars = [
-      this.spawnCar(this.currentLevel.car1Start, spawnThickness, '#ef4444', '#b91c1c', '#fbbf24', '#fb923c', 'Player 1', 'ArrowLeft', 'ArrowRight'),
-      this.spawnCar(this.currentLevel.car2Start, spawnThickness, '#3b82f6', '#1d4ed8', '#fbbf24', '#93c5fd', 'Player 2', 'KeyA', 'KeyD')
+      this.spawnCar(this.currentLevel.car1Start, spawnThickness, 1, '#ef4444', '#b91c1c', '#fbbf24', '#fb923c', 'Player 1', 'ArrowLeft', 'ArrowRight'),
+      this.spawnCar(this.currentLevel.car2Start, spawnThickness, -1, '#3b82f6', '#1d4ed8', '#fbbf24', '#93c5fd', 'Player 2', 'KeyD', 'KeyA')
     ];
 
     this.waterY = WATER_START_Y;
@@ -369,6 +403,7 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
   private spawnCar(
     start: Point,
     thickness: number,
+    facingSign: 1 | -1,
     color: string,
     darkColor: string,
     stripeColor: string,
@@ -410,6 +445,7 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
       wheelA,
       wheelB,
       headBody,
+      facingSign,
       color,
       darkColor,
       stripeColor,
@@ -418,11 +454,14 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
       leftKey,
       rightKey,
       leftHeld: false,
-      rightHeld: false
+      rightHeld: false,
+      groundContacts: 0
     };
 
     this.chassisOwners.set(chassis, car);
     this.headOwners.set(headBody, car);
+    this.wheelOwners.set(wheelA, car);
+    this.wheelOwners.set(wheelB, car);
 
     return car;
   }
@@ -459,6 +498,18 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     return this.cars.find(c => c !== car)!;
   }
 
+  /** Keeps each car's wheel↔terrain contact tally current from collisionStart/End. */
+  private trackWheelContact(a: Matter.Body, b: Matter.Body, delta: number): void {
+    const carA = this.wheelOwners.get(a);
+    if (carA && b.label === 'terrain') {
+      carA.groundContacts = Math.max(0, carA.groundContacts + delta);
+    }
+    const carB = this.wheelOwners.get(b);
+    if (carB && a.label === 'terrain') {
+      carB.groundContacts = Math.max(0, carB.groundContacts + delta);
+    }
+  }
+
   private loop = (): void => {
     this.update();
     this.draw();
@@ -470,25 +521,41 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // Driving pushes the chassis center of mass (moves the car) while also
-    // adding a slow wheel-lift torque on top: holding "right" spins the
-    // chassis angle negative — the right wheel gradually lifts, and if the
-    // key stays held long enough the car rolls all the way over into a full
-    // flip. "left" is the mirror image (left wheel lifts, positive spin).
+    // Propulsion is a motor on the WHEELS (spin them, let friction carry the
+    // car along whatever surface it's on — flat ground, a ramp, the curved
+    // walls, a full loop) plus a slow wheel-lift torque on the CHASSIS on top:
+    // holding "accelerate" long enough still rolls the car into a full flip.
+    // `along` folds together which key is held (+1 accelerate / -1 reverse)
+    // and which way the car faces (`facingSign`), so "accelerate" always
+    // drives toward the opponent.
     for (const car of this.cars) {
-      if (car.rightHeld) {
-        if (car.chassis.velocity.x < MAX_DRIVE_SPEED) {
-          Matter.Body.applyForce(car.chassis, car.chassis.position, { x: DRIVE_FORCE, y: 0 });
+      const fwd = car.facingSign;
+      const along = car.rightHeld ? fwd : car.leftHeld ? -fwd : 0;
+      if (along !== 0) {
+        // Ease each wheel toward the motor's target spin rather than snapping,
+        // so there's a short acceleration ramp and the wheels can still be
+        // back-driven (skid) by a hard landing or a shove.
+        const targetSpin = along * (MAX_DRIVE_SPEED / WHEEL_RADIUS);
+        for (const wheel of [car.wheelA, car.wheelB]) {
+          const spin = wheel.angularVelocity + (targetSpin - wheel.angularVelocity) * WHEEL_MOTOR_RESPONSE;
+          Matter.Body.setAngularVelocity(wheel, spin);
         }
-        if (car.chassis.angularVelocity > -MAX_ANGULAR_VELOCITY) {
-          car.chassis.torque -= FLIP_TORQUE;
+        // Also nudge the chassis forward a little so acceleration feels
+        // immediate even before the wheels bite.
+        const hx = Math.cos(car.chassis.angle);
+        const hy = Math.sin(car.chassis.angle);
+        Matter.Body.applyForce(car.chassis, car.chassis.position, {
+          x: along * DRIVE_FORCE * hx,
+          y: along * DRIVE_FORCE * hy
+        });
+      }
+      if (car.rightHeld) {
+        if (fwd * car.chassis.angularVelocity > -MAX_ANGULAR_VELOCITY) {
+          car.chassis.torque -= fwd * FLIP_TORQUE;
         }
       } else if (car.leftHeld) {
-        if (car.chassis.velocity.x > -MAX_DRIVE_SPEED) {
-          Matter.Body.applyForce(car.chassis, car.chassis.position, { x: -DRIVE_FORCE, y: 0 });
-        }
-        if (car.chassis.angularVelocity < MAX_ANGULAR_VELOCITY) {
-          car.chassis.torque += FLIP_TORQUE;
+        if (fwd * car.chassis.angularVelocity < MAX_ANGULAR_VELOCITY) {
+          car.chassis.torque += fwd * FLIP_TORQUE;
         }
       }
     }
@@ -500,7 +567,15 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     // resulting speed. Clamping the actual post-step angularVelocity (not
     // just gating whether we add more torque) is what keeps every flip, however
     // it started, rolling over at the same slow, controlled pace.
+    //
+    // ...but only while the car is on the ground. In the air we let the spin
+    // run free, so a wheel that catches an edge can genuinely launch the car
+    // into a jump — that's the intended way to hop between (or back onto) the
+    // floating platforms. The clamp re-engages the moment it lands.
     for (const car of this.cars) {
+      if (car.groundContacts === 0) {
+        continue;
+      }
       if (car.chassis.angularVelocity > MAX_ANGULAR_VELOCITY) {
         Matter.Body.setAngularVelocity(car.chassis, MAX_ANGULAR_VELOCITY);
       } else if (car.chassis.angularVelocity < -MAX_ANGULAR_VELOCITY) {
@@ -551,6 +626,13 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
       this.gameOverMessage = `🏆 ${winner.label} Wins the Match ${winnerScore}-${loserScore}!`;
     } else {
       this.gameOverMessage = message;
+      // Hold the result on screen briefly, then roll into the next round on
+      // our own — no click needed. loadLevel() clears this timer, so a player
+      // who hits Space/the button during the pause just advances early.
+      this.roundAdvanceTimer = setTimeout(() => {
+        this.roundAdvanceTimer = null;
+        this.advanceRound();
+      }, ROUND_ADVANCE_DELAY_MS);
     }
   }
 

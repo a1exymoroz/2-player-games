@@ -71,8 +71,8 @@
   </div>
 
   <div class="hint">
-    <span class="player-hint player-hint--red">Player 1: <kbd>←</kbd> reverse · <kbd>→</kbd> accelerate</span>
-    <span class="player-hint player-hint--blue">Player 2: <kbd>A</kbd> reverse · <kbd>D</kbd> accelerate</span>
+    <span class="player-hint player-hint--red">Player 1: <kbd>→</kbd> accelerate · <kbd>←</kbd> reverse</span>
+    <span class="player-hint player-hint--blue">Player 2: <kbd>A</kbd> accelerate · <kbd>D</kbd> reverse</span>
     <span class="player-hint">Reset: <kbd>Space</kbd></span>
   </div>
 
@@ -102,20 +102,20 @@
       <button
         type="button"
         class="control-btn"
-        aria-label="Player 2 reverse"
-        (pointerdown)="setControlHeld(1, 'left', true, $event)"
-        (pointerup)="setControlHeld(1, 'left', false, $event)"
-        (pointerleave)="setControlHeld(1, 'left', false, $event)"
-        (pointercancel)="setControlHeld(1, 'left', false, $event)"
-      >◀</button>
-      <button
-        type="button"
-        class="control-btn"
         aria-label="Player 2 accelerate"
         (pointerdown)="setControlHeld(1, 'right', true, $event)"
         (pointerup)="setControlHeld(1, 'right', false, $event)"
         (pointerleave)="setControlHeld(1, 'right', false, $event)"
         (pointercancel)="setControlHeld(1, 'right', false, $event)"
+      >◀</button>
+      <button
+        type="button"
+        class="control-btn"
+        aria-label="Player 2 reverse"
+        (pointerdown)="setControlHeld(1, 'left', true, $event)"
+        (pointerup)="setControlHeld(1, 'left', false, $event)"
+        (pointerleave)="setControlHeld(1, 'left', false, $event)"
+        (pointercancel)="setControlHeld(1, 'left', false, $event)"
       >▶</button>
     </div>
   </div>

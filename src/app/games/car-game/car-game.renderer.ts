@@ -186,6 +186,9 @@ function drawCarBody(ctx: CanvasRenderingContext2D, car: PlayerCar): void {
   ctx.save();
   ctx.translate(car.chassis.position.x, car.chassis.position.y);
   ctx.rotate(car.chassis.angle);
+  // Mirror the body (and its nose bump) so the car faces its opponent. Uniform
+  // ±1 scale, so stroke widths are unaffected.
+  ctx.scale(car.facingSign, 1);
 
   const w = CHASSIS_WIDTH;
   const h = CHASSIS_HEIGHT;

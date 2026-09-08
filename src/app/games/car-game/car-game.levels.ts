@@ -160,13 +160,17 @@ export const LEVELS: LevelDefinition[] = [
   },
   {
     name: 'Floating Islands',
+    // Both islands sit at the SAME height and are mirror images about the
+    // centre — so neither car gets extra time before the rising water reaches
+    // it, and there's no higher ledge to unfairly flip-launch onto. The gap is
+    // meant to be crossed with a running flip; that's the (now symmetric) duel.
     paths: [
-      flat(0.20, 0.40, GROUND_Y - 100),
-      flat(0.60, 0.80, GROUND_Y - 200)
+      flat(0.20, 0.40, GROUND_Y - 130),
+      flat(0.60, 0.80, GROUND_Y - 130)
     ],
     frameTrackPath: buildOvalTrackPath(),
-    car1Start: { x: WIDTH * 0.3, y: GROUND_Y - 110 },
-    car2Start: { x: WIDTH * 0.7, y: GROUND_Y - 210 }
+    car1Start: { x: WIDTH * 0.3, y: GROUND_Y - 140 },
+    car2Start: { x: WIDTH * 0.7, y: GROUND_Y - 140 }
   },
   {
     name: 'See-Saw',

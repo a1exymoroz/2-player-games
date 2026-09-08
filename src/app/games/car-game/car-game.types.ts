@@ -47,6 +47,8 @@ export interface PlayerCar {
   wheelB: Matter.Body;
   /** Sensor body standing in for the driver's head — see spawnCar() for why. */
   headBody: Matter.Body;
+  /** +1 = faces +x (right), -1 = faces -x (left). Mirrors both the sprite and the drive/flip direction so "accelerate" always means "toward the opponent". */
+  facingSign: 1 | -1;
   color: string;
   darkColor: string;
   stripeColor: string;
@@ -56,4 +58,6 @@ export interface PlayerCar {
   rightKey: string;
   leftHeld: boolean;
   rightHeld: boolean;
+  /** Live count of this car's wheel↔terrain contacts; > 0 means grounded. */
+  groundContacts: number;
 }

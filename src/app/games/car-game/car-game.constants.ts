@@ -7,9 +7,12 @@ export const CHASSIS_WIDTH = 90;
 export const CHASSIS_HEIGHT = 26;
 export const WHEEL_RADIUS = 17;
 
-/** Force applied directly to the chassis center of mass, moving the car. */
-export const DRIVE_FORCE = 0.003;
-export const MAX_DRIVE_SPEED = 20;
+/** Small chassis-center nudge on top of the wheel motor, so acceleration bites instantly. */
+export const DRIVE_FORCE = 0.0014;
+/** Ground-speed ceiling (px/step). The wheel motor targets this ÷ WHEEL_RADIUS as its spin. */
+export const MAX_DRIVE_SPEED = 11;
+/** How hard the wheel motor pulls each wheel toward its target spin per step (0-1): higher = snappier + grippier climbing, lower = more of a roll-up. */
+export const WHEEL_MOTOR_RESPONSE = 0.05;
 
 /** Angular impulse applied to the chassis each step while a direction is held, on top of the drive force — see update() for the wheel-lift/flip control. */
 export const FLIP_TORQUE = 0.08;
@@ -29,6 +32,9 @@ export const TERRAIN_SEGMENT_LENGTH = 18;
 export const LOOP_RADIUS = 130;
 /** Physics thickness for a level's frameTrackPath — thin, to match the visible viewport outline it rides under. */
 export const FRAME_TRACK_THICKNESS = OUTLINE_WIDTH + 10;
+
+/** How long the round-result banner shows before the next round auto-loads. Space/button still skips it. */
+export const ROUND_ADVANCE_DELAY_MS = 2000;
 
 /** Starts below the visible canvas so the hazard isn't immediately in view. */
 export const WATER_START_Y = HEIGHT + 60;
