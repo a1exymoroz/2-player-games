@@ -186,5 +186,62 @@ export const LEVELS: LevelDefinition[] = [
     car1Start: { x: HOOK_LEFT_CENTER.x, y: HOOK_LEFT_CENTER.y + HOOK_RADIUS },
     car2Start: { x: HOOK_RIGHT_CENTER.x, y: HOOK_RIGHT_CENTER.y + HOOK_RADIUS },
     hideViewportFrame: true
+  },
+  {
+    // One smooth curve, symmetric about centre: a crest each side (a local
+    // maximum, so the tangent is horizontal and spawnCar sits the car flush),
+    // a valley in the middle where the two roll down to shove each other.
+    name: 'Rolling Hills',
+    paths: [
+      heightMapPath([
+        { xFrac: 0.03, y: GROUND_Y - 10 },
+        { xFrac: 0.2, y: GROUND_Y - 95 },
+        { xFrac: 0.5, y: GROUND_Y + 15 },
+        { xFrac: 0.8, y: GROUND_Y - 95 },
+        { xFrac: 0.97, y: GROUND_Y - 10 }
+      ])
+    ],
+    frameTrackPath: buildOvalTrackPath(),
+    car1Start: { x: WIDTH * 0.2, y: GROUND_Y - 95 },
+    car2Start: { x: WIDTH * 0.8, y: GROUND_Y - 95 }
+  },
+  {
+    // Both cars spawn nose-to-nose on a narrow raised platform (~216px for two
+    // 90px cars). A lower ledge each side catches whoever gets shoved off —
+    // or they sail past it into the rising water.
+    name: 'Pedestal',
+    paths: [
+      flat(0.04, 0.3, GROUND_Y - 10),
+      flat(0.38, 0.62, GROUND_Y - 150),
+      flat(0.7, 0.96, GROUND_Y - 10)
+    ],
+    frameTrackPath: buildOvalTrackPath(),
+    car1Start: { x: WIDTH * 0.45, y: GROUND_Y - 150 },
+    car2Start: { x: WIDTH * 0.55, y: GROUND_Y - 150 }
+  },
+  {
+    // Two ramps rising toward the centre with a ~108px gap between the lips.
+    // Flat run-ups give a clean spawn and room to build speed; cars launch off
+    // the lip and collide mid-air over the gap. Land on your head and you lose;
+    // otherwise you clear to the far ramp. The ramp polylines are 3 near-
+    // collinear points so the renderer draws them as road, not a flat slab.
+    name: 'Ramp Duel',
+    paths: [
+      flat(0.02, 0.16, GROUND_Y),
+      [
+        { x: WIDTH * 0.16, y: GROUND_Y },
+        { x: WIDTH * 0.3, y: GROUND_Y - 70 },
+        { x: WIDTH * 0.44, y: GROUND_Y - 135 }
+      ],
+      [
+        { x: WIDTH * 0.56, y: GROUND_Y - 135 },
+        { x: WIDTH * 0.7, y: GROUND_Y - 70 },
+        { x: WIDTH * 0.84, y: GROUND_Y }
+      ],
+      flat(0.84, 0.98, GROUND_Y)
+    ],
+    frameTrackPath: buildOvalTrackPath(),
+    car1Start: { x: WIDTH * 0.09, y: GROUND_Y },
+    car2Start: { x: WIDTH * 0.91, y: GROUND_Y }
   }
 ];
