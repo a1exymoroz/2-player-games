@@ -6,15 +6,19 @@ import {
   CHASSIS_HEIGHT,
   CHASSIS_WIDTH,
   DRIVE_FORCE,
+  FALL_SLOWING,
   FLIP_TORQUE,
+  HIDE_SECOND_CAR,
   HEAD_OFFSET,
   HEAD_RADIUS,
   HEIGHT,
   MAX_ANGULAR_VELOCITY,
   MAX_DRIVE_SPEED,
   ROUND_ADVANCE_DELAY_MS,
+  SIM_TIME_SCALE,
   WHEEL_MOTOR_RESPONSE,
   TERRAIN_THICKNESS,
+  WATER_ENABLED,
   WATER_RISE_SPEED,
   WATER_START_Y,
   WHEEL_RADIUS,
@@ -47,7 +51,6 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
   // who's involved without stashing extra properties on the Matter body.
   private chassisOwners = new WeakMap<Matter.Body, PlayerCar>();
   private headOwners = new WeakMap<Matter.Body, PlayerCar>();
-  private wheelOwners = new WeakMap<Matter.Body, PlayerCar>();
 
   private animationFrameId = 0;
   private waterY = WATER_START_Y;
@@ -192,6 +195,9 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     this.engine = Matter.Engine.create();
     this.world = this.engine.world;
     this.world.gravity.y = 1.1;
+    // Run the whole simulation in gentle slow-motion — see SIM_TIME_SCALE.
+    // Set once; the engine (and its timing) outlives every World.clear().
+    this.engine.timing.timeScale = SIM_TIME_SCALE;
 
     // Win/lose-by-crash is driven by real collisions rather than an
     // analytical "ground height at x" check, since that wouldn't generalize
@@ -199,9 +205,6 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     // once — it survives World.clear() on every level change because the
     // engine itself is never recreated, only its contents.
     Matter.Events.on(this.engine, 'collisionStart', (event: Matter.IEventCollision<Matter.Engine>) => {
-      for (const pair of event.pairs) {
-        this.trackWheelContact(pair.bodyA, pair.bodyB, 1);
-      }
       if (this.gameOverMessage) {
         return;
       }
@@ -212,18 +215,13 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
       }
     });
 
-    // Wheel↔terrain contact count per car — a car is "grounded" while it's > 0.
-    // Only used to decide when to apply the calm-driving angular-velocity clamp:
-    // once airborne we stop fighting the car's spin so a flip actually launches
-    // it far enough to land back on a platform.
-    Matter.Events.on(this.engine, 'collisionEnd', (event: Matter.IEventCollision<Matter.Engine>) => {
-      for (const pair of event.pairs) {
-        this.trackWheelContact(pair.bodyA, pair.bodyB, -1);
-      }
+    // Deferred a microtask past ngAfterViewInit: startNewMatch() picks a random
+    // first level, which would change the bound `currentLevel.name` mid-check
+    // and trip ExpressionChangedAfterItHasBeenChecked in dev.
+    queueMicrotask(() => {
+      this.startNewMatch();
+      this.loop();
     });
-
-    this.startNewMatch();
-    this.loop();
 
     // Lets the global Tech Stack FAB (declared outside this component, in
     // AppComponent) hide itself only while this full-screen mobile layout is
@@ -352,6 +350,9 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
       this.spawnCar(this.currentLevel.car1Start, spawnThickness, 1, '#ef4444', '#b91c1c', '#fbbf24', '#fb923c', 'Player 1', 'ArrowLeft', 'ArrowRight'),
       this.spawnCar(this.currentLevel.car2Start, spawnThickness, -1, '#3b82f6', '#1d4ed8', '#fbbf24', '#93c5fd', 'Player 2', 'KeyD', 'KeyA')
     ];
+    if (HIDE_SECOND_CAR) {
+      this.hideCar(this.cars[1]);
+    }
 
     this.waterY = WATER_START_Y;
     this.gameOverMessage = null;
@@ -455,15 +456,26 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
       rightKey,
       leftHeld: false,
       rightHeld: false,
-      groundContacts: 0
+      hidden: false
     };
 
     this.chassisOwners.set(chassis, car);
     this.headOwners.set(headBody, car);
-    this.wheelOwners.set(wheelA, car);
-    this.wheelOwners.set(wheelB, car);
 
     return car;
+  }
+
+  /**
+   * Testing aid (HIDE_SECOND_CAR): freeze the car where it spawned, stop it
+   * colliding with anything, and mark it so the renderer and every per-frame
+   * physics loop skip it — leaving Player 1 alone on the level.
+   */
+  private hideCar(car: PlayerCar): void {
+    car.hidden = true;
+    for (const body of [car.chassis, car.wheelA, car.wheelB, car.headBody]) {
+      Matter.Body.setStatic(body, true);
+      body.collisionFilter.mask = 0;
+    }
   }
 
   /**
@@ -498,18 +510,6 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     return this.cars.find(c => c !== car)!;
   }
 
-  /** Keeps each car's wheel↔terrain contact tally current from collisionStart/End. */
-  private trackWheelContact(a: Matter.Body, b: Matter.Body, delta: number): void {
-    const carA = this.wheelOwners.get(a);
-    if (carA && b.label === 'terrain') {
-      carA.groundContacts = Math.max(0, carA.groundContacts + delta);
-    }
-    const carB = this.wheelOwners.get(b);
-    if (carB && a.label === 'terrain') {
-      carB.groundContacts = Math.max(0, carB.groundContacts + delta);
-    }
-  }
-
   private loop = (): void => {
     this.update();
     this.draw();
@@ -529,6 +529,9 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     // and which way the car faces (`facingSign`), so "accelerate" always
     // drives toward the opponent.
     for (const car of this.cars) {
+      if (car.hidden) {
+        continue;
+      }
       const fwd = car.facingSign;
       const along = car.rightHeld ? fwd : car.leftHeld ? -fwd : 0;
       if (along !== 0) {
@@ -566,14 +569,10 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
     // its own — our torque above no longer has anything to do with the
     // resulting speed. Clamping the actual post-step angularVelocity (not
     // just gating whether we add more torque) is what keeps every flip, however
-    // it started, rolling over at the same slow, controlled pace.
-    //
-    // ...but only while the car is on the ground. In the air we let the spin
-    // run free, so a wheel that catches an edge can genuinely launch the car
-    // into a jump — that's the intended way to hop between (or back onto) the
-    // floating platforms. The clamp re-engages the moment it lands.
+    // it started, rolling over at the same slow, controlled pace — on the
+    // ground and in the air alike, so a car never pinwheels off a jump.
     for (const car of this.cars) {
-      if (car.groundContacts === 0) {
+      if (car.hidden) {
         continue;
       }
       if (car.chassis.angularVelocity > MAX_ANGULAR_VELOCITY) {
@@ -583,31 +582,56 @@ export class CarGameComponent implements AfterViewInit, OnDestroy {
       }
     }
 
+    // Extra drag on DOWNWARD motion only — a real drop floats down instead of
+    // plummeting, giving time to line up a landing, while jump height, driving
+    // and upward launches are untouched. Skipped near-zero so a car resting on
+    // the ground (tiny contact-solver jitter) isn't nudged around. All three
+    // rigid bodies are damped together so the car doesn't stretch mid-air.
+    if (FALL_SLOWING > 0) {
+      for (const car of this.cars) {
+        if (car.hidden) {
+          continue;
+        }
+        for (const body of [car.chassis, car.wheelA, car.wheelB]) {
+          if (body.velocity.y > 1.5) {
+            Matter.Body.setVelocity(body, { x: body.velocity.x, y: body.velocity.y * (1 - FALL_SLOWING) });
+          }
+        }
+      }
+    }
+
     // A collision during the step above may already have ended the game —
     // don't let the water/off-map checks below override that this frame.
     if (this.gameOverMessage) {
       return;
     }
 
-    this.waterY -= WATER_RISE_SPEED / 60;
+    if (WATER_ENABLED) {
+      // Scaled by SIM_TIME_SCALE too, so the water keeps the same pace relative
+      // to the (now slower) cars — the time pressure per manoeuvre is unchanged.
+      this.waterY -= (WATER_RISE_SPEED / 60) * SIM_TIME_SCALE;
 
-    // Water overrides every other outcome, so it's checked before anything else.
-    for (const car of this.cars) {
-      const submergedDepth = Math.max(
-        car.chassis.position.y + CHASSIS_HEIGHT / 2,
-        car.wheelA.position.y + WHEEL_RADIUS,
-        car.wheelB.position.y + WHEEL_RADIUS,
-        car.headBody.position.y + HEAD_RADIUS
-      );
-      if (submergedDepth >= this.waterY) {
-        this.endGame(`💦 ${car.label} Fell in Water`, this.otherCar(car));
-        return;
+      // Water overrides every other outcome, so it's checked before anything else.
+      for (const car of this.cars) {
+        if (car.hidden) {
+          continue;
+        }
+        const submergedDepth = Math.max(
+          car.chassis.position.y + CHASSIS_HEIGHT / 2,
+          car.wheelA.position.y + WHEEL_RADIUS,
+          car.wheelB.position.y + WHEEL_RADIUS,
+          car.headBody.position.y + HEAD_RADIUS
+        );
+        if (submergedDepth >= this.waterY) {
+          this.endGame(`💦 ${car.label} Fell in Water`, this.otherCar(car));
+          return;
+        }
       }
     }
 
     // Safety net: a car that flies far off the level (e.g. off a see-saw
     // with nothing below it yet) gets a silent reset rather than falling forever.
-    if (this.cars.some(car => car.chassis.position.y > HEIGHT + 250)) {
+    if (this.cars.some(car => !car.hidden && car.chassis.position.y > HEIGHT + 250)) {
       this.resetCurrentRound();
     }
   }

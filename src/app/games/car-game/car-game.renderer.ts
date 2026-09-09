@@ -299,6 +299,9 @@ export function renderFrame(ctx: CanvasRenderingContext2D, state: RenderState): 
   drawTerrain(ctx, state);
 
   for (const car of state.cars) {
+    if (car.hidden) {
+      continue;
+    }
     drawCar(ctx, car);
   }
 

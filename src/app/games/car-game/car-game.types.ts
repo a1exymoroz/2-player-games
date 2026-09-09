@@ -58,6 +58,6 @@ export interface PlayerCar {
   rightKey: string;
   leftHeld: boolean;
   rightHeld: boolean;
-  /** Live count of this car's wheel↔terrain contacts; > 0 means grounded. */
-  groundContacts: number;
+  /** Testing only (HIDE_SECOND_CAR): frozen, non-colliding, and skipped by the renderer. */
+  hidden: boolean;
 }
