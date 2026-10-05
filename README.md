@@ -56,3 +56,5 @@ npm run build
 - [Matter.js](https://brm.io/matter-js/) — 2D physics engine powering Car Duel
 
 See [docs/STACK.md](docs/STACK.md) for the full technical breakdown.
+
+Verification for WhyHireWrong?
