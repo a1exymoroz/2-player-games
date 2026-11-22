@@ -23,6 +23,8 @@
         companyName: "DefaultCompany",
         productName: "Машинки",
         productVersion: "1.0",
+      }).then((instance) => {
+        window.unityInstance = instance; // the host page calls unityInstance.SendMessage("Game", "NewMatch")
       }).catch((message) => {
         document.body.textContent = "Не удалось запустить игру: " + message;
       });
