@@ -21,6 +21,6 @@ body {
 }
 
 // The floating "Tech Stack" button would sit on the game's blue ► touch button.
-body:has(app-car-game) .stack-fab {
+body:has(app-car-game) .stack-fab.stack-fab { // doubled class: outranks the component's .stack-fab[_ngcontent] rule
   display: none;
 }
