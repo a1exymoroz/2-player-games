@@ -22,105 +22,26 @@
       <span>Back to Games</span>
     </a>
     <h1>Car Duel</h1>
-    <div class="header-controls">
-      <div class="round-indicator">
-        <span class="round-label">Round {{ roundNumber }}/{{ totalRounds }}</span>
-        <span class="level-name">{{ currentLevel.name }}</span>
-      </div>
-      @if (fullscreenSupported) {
-        <button
-          type="button"
-          class="fullscreen-btn"
-          (click)="toggleFullscreen()"
-          [attr.aria-label]="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-        >
-          @if (!isFullscreen) {
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>
-            </svg>
-          } @else {
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>
-            </svg>
-          }
-        </button>
-      }
+    @if (fullscreenSupported) {
       <button
         type="button"
-        class="reset-icon-btn"
-        (click)="primaryAction()"
-        [attr.aria-label]="isMatchOver ? 'New match' : (gameOverMessage ? 'Next round' : 'Reset positions')"
-      >↺</button>
-    </div>
+        class="fullscreen-btn"
+        (click)="toggleFullscreen()"
+        [attr.aria-label]="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>
+        </svg>
+      </button>
+    }
   </header>
 
-  <div class="track-wrapper">
-    <div class="scoreboard">
-      <span class="score score--red">{{ player1Score }}</span>
-      <span class="score-dot">•</span>
-      <span class="score score--blue">{{ player2Score }}</span>
-    </div>
-
-    <canvas #canvas class="track"></canvas>
-
-    @if (gameOverMessage) {
-      <div class="game-over-overlay">
-        <p class="game-over-message" [style.background]="gameOverGradient">{{ gameOverMessage }}</p>
-      </div>
-    }
-  </div>
-
-  <div class="hint">
-    <span class="player-hint player-hint--red">Player 1: <kbd>→</kbd> accelerate · <kbd>←</kbd> reverse</span>
-    <span class="player-hint player-hint--blue">Player 2: <kbd>A</kbd> accelerate · <kbd>D</kbd> reverse</span>
-    <span class="player-hint">Reset: <kbd>Space</kbd></span>
-  </div>
-
-  <div class="mobile-controls">
-    <div class="control-pad control-pad--red">
-      <button
-        type="button"
-        class="control-btn"
-        aria-label="Player 1 reverse"
-        (pointerdown)="setControlHeld(0, 'left', true, $event)"
-        (pointerup)="setControlHeld(0, 'left', false, $event)"
-        (pointerleave)="setControlHeld(0, 'left', false, $event)"
-        (pointercancel)="setControlHeld(0, 'left', false, $event)"
-      >◀</button>
-      <button
-        type="button"
-        class="control-btn"
-        aria-label="Player 1 accelerate"
-        (pointerdown)="setControlHeld(0, 'right', true, $event)"
-        (pointerup)="setControlHeld(0, 'right', false, $event)"
-        (pointerleave)="setControlHeld(0, 'right', false, $event)"
-        (pointercancel)="setControlHeld(0, 'right', false, $event)"
-      >▶</button>
-    </div>
-
-    <div class="control-pad control-pad--blue">
-      <button
-        type="button"
-        class="control-btn"
-        aria-label="Player 2 accelerate"
-        (pointerdown)="setControlHeld(1, 'right', true, $event)"
-        (pointerup)="setControlHeld(1, 'right', false, $event)"
-        (pointerleave)="setControlHeld(1, 'right', false, $event)"
-        (pointercancel)="setControlHeld(1, 'right', false, $event)"
-      >◀</button>
-      <button
-        type="button"
-        class="control-btn"
-        aria-label="Player 2 reverse"
-        (pointerdown)="setControlHeld(1, 'left', true, $event)"
-        (pointerup)="setControlHeld(1, 'left', false, $event)"
-        (pointerleave)="setControlHeld(1, 'left', false, $event)"
-        (pointercancel)="setControlHeld(1, 'left', false, $event)"
-      >▶</button>
-    </div>
-  </div>
-
-  <div class="actions">
-    <button class="btn btn-secondary" (click)="primaryAction()">{{ isMatchOver ? 'New Match' : (gameOverMessage ? 'Next Round' : 'Reset Positions') }}</button>
-  </div>
+  <iframe
+    #frame
+    class="game-frame"
+    src="assets/car-game/index.html"
+    title="Car Duel"
+    allow="fullscreen; autoplay"
+    (load)="focusGame()"
+  ></iframe>
 </div>
