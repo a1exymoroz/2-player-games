@@ -22,7 +22,7 @@ export class HomeComponent {
       {
       id: 'car-game',
       name: 'Car Duel',
-      description: 'Drive, flip, and bump your opponent off the track!',
+      description: "Flip, fly and land on the other driver's head!",
       icon: '🏎️',
       route: '/games/car-game',
       players: '2 Players'
