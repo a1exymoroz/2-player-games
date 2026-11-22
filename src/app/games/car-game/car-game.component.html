@@ -38,12 +38,29 @@
     <button type="button" class="exit-expanded" (click)="toggleFullscreen()" aria-label="Exit fullscreen">×</button>
   }
 
-  <iframe
-    #frame
-    class="game-frame"
-    src="assets/car-game/index.html"
-    title="Car Duel"
-    allow="fullscreen; autoplay"
-    (load)="focusGame()"
-  ></iframe>
+  <div #stage class="stage">
+    <iframe
+      #frame
+      class="game-frame"
+      src="assets/car-game/index.html"
+      title="Car Duel"
+      allow="fullscreen; autoplay"
+      (load)="focusGame()"
+    ></iframe>
+
+    @if (suddenDeath) {
+      <div class="sudden-death" role="status">🌊 Вода поднимается!</div>
+    }
+
+    @if (winner) {
+      <div class="game-over-overlay">
+        <div class="game-over-card">
+          <p class="game-over-message" [class]="'game-over-message game-over-message--' + winner">
+            🏆 {{ winner === 'red' ? 'Красный' : 'Синий' }} победил {{ winner === 'red' ? score.red : score.blue }}:{{ winner === 'red' ? score.blue : score.red }}!
+          </p>
+          <button type="button" class="btn btn-secondary" (click)="playAgain()">Ещё раз</button>
+        </div>
+      </div>
+    }
+  </div>
 </div>

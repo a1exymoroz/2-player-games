@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, ViewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 // The game itself is a Unity Web build copied into src/assets/car-game
@@ -11,8 +11,40 @@ import { RouterLink } from '@angular/router';
   templateUrl: './car-game.component.html',
   styleUrl: './car-game.component.scss'
 })
-export class CarGameComponent {
+export class CarGameComponent implements OnDestroy {
   @ViewChild('frame') frame!: ElementRef<HTMLIFrameElement>;
+  // Fullscreen goes on the stage (game + HTML overlays), not the iframe, so the overlays stay visible.
+  @ViewChild('stage') stage!: ElementRef<HTMLDivElement>;
+
+  // Text UI is drawn here in HTML from the game's events (see WebEvents.cs in the Unity project).
+  score = { red: 0, blue: 0 };
+  winner: 'red' | 'blue' | null = null;
+  suddenDeath = false;
+  private bannerTimer?: ReturnType<typeof setTimeout>;
+
+  @HostListener('window:message', ['$event'])
+  onGameEvent(event: MessageEvent): void {
+    if (event.source !== this.frame?.nativeElement.contentWindow || event.data?.source !== 'car-duel') return;
+    const { type, data } = event.data;
+    if (type === 'score') this.score = { red: data.red, blue: data.blue };
+    if (type === 'matchOver') this.winner = data.winner;
+    if (type === 'suddenDeath') {
+      this.suddenDeath = true;
+      clearTimeout(this.bannerTimer);
+      this.bannerTimer = setTimeout(() => (this.suddenDeath = false), 2400);
+    }
+  }
+
+  playAgain(): void {
+    this.winner = null;
+    const game = this.frame.nativeElement.contentWindow as (Window & { unityInstance?: { SendMessage(o: string, m: string): void } }) | null;
+    game?.unityInstance?.SendMessage('Game', 'NewMatch');
+    this.focusGame();
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.bannerTimer);
+  }
 
   // Only the Fullscreen API can hide the browser's own tab/address bar on mobile.
   readonly fullscreenSupported = !!document.documentElement.requestFullscreen;
@@ -42,7 +74,7 @@ export class CarGameComponent {
     if (document.fullscreenElement) {
       document.exitFullscreen();
     } else {
-      this.frame.nativeElement
+      this.stage.nativeElement
         .requestFullscreen()
         .then(() => this.lockLandscape())
         .catch(() => {});
