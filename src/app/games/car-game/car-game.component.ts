@@ -18,6 +18,10 @@ export class CarGameComponent {
   readonly fullscreenSupported = !!document.documentElement.requestFullscreen;
   isFullscreen = false;
 
+  // iPhone Safari has no Fullscreen API for pages: the button then stretches the game over the
+  // whole browser window instead (header hidden, × to come back).
+  expanded = false;
+
   // iOS Safari has no Fullscreen API; a Home Screen launch gives a chrome-free view instead.
   readonly showInstallHint =
     !this.fullscreenSupported &&
@@ -31,6 +35,10 @@ export class CarGameComponent {
   }
 
   toggleFullscreen(): void {
+    if (!this.fullscreenSupported) {
+      this.expanded = !this.expanded;
+      return;
+    }
     if (document.fullscreenElement) {
       document.exitFullscreen();
     } else {
