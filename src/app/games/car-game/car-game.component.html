@@ -1,4 +1,4 @@
-<div class="game-container">
+<div class="game-container" [class.expanded]="expanded">
   <div class="rotate-hint">
     <svg class="rotate-hint__icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <rect x="30" y="10" width="40" height="80" rx="8" fill="none" stroke="white" stroke-width="5"/>
@@ -22,19 +22,21 @@
       <span>Back to Games</span>
     </a>
     <h1>Car Duel</h1>
-    @if (fullscreenSupported) {
-      <button
-        type="button"
-        class="fullscreen-btn"
-        (click)="toggleFullscreen()"
-        [attr.aria-label]="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-      >
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>
-        </svg>
-      </button>
-    }
+    <button
+      type="button"
+      class="fullscreen-btn"
+      (click)="toggleFullscreen()"
+      [attr.aria-label]="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
+    >
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>
+      </svg>
+    </button>
   </header>
+
+  @if (expanded) {
+    <button type="button" class="exit-expanded" (click)="toggleFullscreen()" aria-label="Exit fullscreen">×</button>
+  }
 
   <iframe
     #frame
