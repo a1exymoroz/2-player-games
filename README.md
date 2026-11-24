@@ -4,7 +4,7 @@ A collection of classic 2-player games built with Angular 17, meant to be played
 
 ## Games Available
 
-- 🏎️ **Car Duel** — Two cars, one screen: touch the other driver's head to win the round, but if your own head hits anything, or you sink or fly off the screen, you lose it. First to 5. Built in Unity 6 (2D physics) and embedded as a Web build; red drives with `A`/`D`, blue with `←`/`→`, or the on-screen ◄ ► buttons on touch screens. 12 arenas, rising water in sudden death.
+- 🏎️ **Car Duel** — Two cars, one screen: touch the other driver's head to win the round, but if your own head hits anything, or you sink or fly off the screen, you lose it. First to 5. Built in Unity 6 (2D physics) and embedded as a Web build; red drives with `A`/`D`, blue with `←`/`→`, or the on-screen ◄ ► buttons on touch screens. 29 arenas with AI-painted art, rising water in sudden death.
 - 🔴 **Connect Four** — Classic disc-drop strategy game. Get four in a row (horizontally, vertically, or diagonally) before your opponent.
 - 🚢 **Battleship** — Place your fleet, then take turns firing at your opponent's grid to sink their ships first. Pass-and-play on a single device.
 - ⭕ **Tic Tac Toe** — The classic X and O game. Get three in a row to win.
